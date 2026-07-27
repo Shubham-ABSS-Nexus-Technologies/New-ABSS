@@ -54,6 +54,7 @@ const publicPages = [
   ["src/pages/support-policy.html", "support-policy.html"],
   ["src/pages/sitemap.html", "sitemap.html"],
   ["src/pages/service-website-development.html", path.join("services", "website-development.html")],
+  ["src/pages/service-ui-ux-design.html", path.join("services", "ui-ux-design.html")],
   ["src/pages/404.html", "404.html"],
 ];
 
@@ -82,6 +83,7 @@ const requiredBuildFiles = [
   "contact.html",
   "404.html",
   path.join("services", "website-development.html"),
+  path.join("services", "ui-ux-design.html"),
   "_redirects",
   "_headers",
 ];
