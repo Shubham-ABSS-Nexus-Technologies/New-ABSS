@@ -148,6 +148,26 @@
               <strong>Handle maintenance tickets and priorities</strong>
             </a>
           </div>
+          <article class="admin-card storage-card" data-storage-panel>
+            <div class="admin-card-header">
+              <div>
+                <p class="eyebrow">Storage</p>
+                <h2>Business data storage</h2>
+              </div>
+              <span class="admin-chip" data-storage-active>Checking</span>
+            </div>
+            <div class="storage-grid">
+              <div><span>Active Storage</span><strong data-storage-field="activeStorage">Checking</strong></div>
+              <div><span>D1 Connection</span><strong data-storage-field="d1Connected">Checking</strong></div>
+              <div><span>Leads</span><strong data-storage-field="leads">0</strong></div>
+              <div><span>Projects</span><strong data-storage-field="projects">0</strong></div>
+              <div><span>Clients</span><strong data-storage-field="clients">0</strong></div>
+              <div><span>Tickets</span><strong data-storage-field="tickets">0</strong></div>
+            </div>
+            <p class="storage-note" data-storage-migration>Status unavailable.</p>
+            <button type="button" class="admin-primary-action" data-migrate-storage hidden>Migrate KV Data to D1</button>
+            <p class="form-status" data-storage-message aria-live="polite"></p>
+          </article>
         </section>
       </section>
 

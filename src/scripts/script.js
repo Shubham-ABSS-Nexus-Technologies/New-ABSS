@@ -267,6 +267,7 @@ const formToLead = (form) => {
     budget: Number(firstBudgetNumber),
     budgetLabel,
     message: [message, timeline ? `Timeline: ${timeline}` : ""].filter(Boolean).join("\n\n"),
+    timeline,
     status: "New",
     source: sourceMap[formName] || "Contact Form",
     formName,
@@ -399,7 +400,8 @@ if (adminApp) {
     return sanitizeState(adminApi?.loadState(defaults) || clone(defaults));
   };
   let adminState = clone(defaults);
-  let activeFilters = { leadsSearch: "", leadsStatus: "all" };
+  let activeFilters = { leadsSearch: "", leadsStatus: "all", leadsPage: 1, leadsPageSize: 20 };
+  let storageStatus = null;
 
   const saveState = () => {
     adminApi?.saveState(adminState);
@@ -451,10 +453,16 @@ if (adminApp) {
   const csvCell = (value) => `"${String(value ?? "").replaceAll('"', '""').replaceAll("\r", " ").replaceAll("\n", " ")}"`;
   const getLeadById = (id) => adminState.leads.find((lead) => String(lead.id) === String(id));
   const normalizedLeadStatus = (status) => (leadStatuses.includes(status) ? status : "New");
-  const updateLeadStatus = (id, status) => {
+  const updateLeadStatus = async (id, status) => {
     const lead = getLeadById(id);
     const nextStatus = normalizedLeadStatus(status);
     if (!lead) return;
+    if (adminApi?.isAuthenticated?.()) {
+      await adminApi.updateLead(id, { status: nextStatus });
+      lead.status = nextStatus;
+      lead.updatedAt = new Date().toISOString();
+      return;
+    }
     lead.status = nextStatus;
     lead.updatedAt = new Date().toISOString();
     addActivity(`${leadName(lead)} lead moved to ${nextStatus}`);
@@ -469,6 +477,33 @@ if (adminApp) {
     return "neutral";
   };
 
+  const refreshStorageStatus = async () => {
+    try {
+      storageStatus = await adminApi?.getStorageStatus();
+    } catch (error) {
+      storageStatus = null;
+    }
+  };
+
+  const refreshLeadsFromServer = async () => {
+    if (!document.querySelector("[data-leads-table]") || !adminApi?.listLeads || !adminApi?.isAuthenticated?.()) return;
+    try {
+      const result = await adminApi.listLeads({
+        page: activeFilters.leadsPage,
+        pageSize: activeFilters.leadsPageSize,
+        search: activeFilters.leadsSearch,
+        status: activeFilters.leadsStatus,
+        sort: "newest",
+      });
+      adminState.leads = result.items || [];
+      adminState.leadsTotal = result.total || adminState.leads.length;
+      adminState.leadsPage = result.page || activeFilters.leadsPage;
+      adminState.leadsPageSize = result.pageSize || activeFilters.leadsPageSize;
+    } catch (error) {
+      console.error("Lead pagination failed", error);
+    }
+  };
+
   const showAdmin = async () => {
     const session = await window.AbssAdminAuthGuard?.requireAdminSession(defaults);
     if (!session?.authenticated) {
@@ -476,11 +511,15 @@ if (adminApp) {
     }
 
     adminState = sanitizeState(session.state || readState());
-    saveState();
+    await refreshLeadsFromServer();
+    if (adminApi?.getMode?.() !== "api") {
+      saveState();
+    }
 
     if (adminShell) {
       adminShell.hidden = false;
     }
+    await refreshStorageStatus();
     renderAdmin();
   };
 
@@ -495,11 +534,52 @@ if (adminApp) {
     renderAdmin();
   });
 
-  document.querySelector("[data-export-csv]")?.addEventListener("click", () => {
+  document.querySelector("[data-migrate-storage]")?.addEventListener("click", async (event) => {
+    const button = event.currentTarget;
+    const message = document.querySelector("[data-storage-message]");
+    const confirmed = window.confirm("Migrate existing KV data into D1? Existing KV data will remain unchanged as a backup.");
+    if (!confirmed) return;
+    button.disabled = true;
+    if (message) {
+      message.className = "form-status";
+      message.textContent = "Migration is running...";
+    }
+    try {
+      const result = await adminApi?.migrateStorage();
+      await refreshStorageStatus();
+      const migrated =
+        Number(result.leadsMigrated || 0) +
+        Number(result.projectsMigrated || 0) +
+        Number(result.clientsMigrated || 0) +
+        Number(result.ticketsMigrated || 0) +
+        Number(result.pricingMigrated || 0) +
+        Number(result.activityMigrated || 0);
+      if (message) {
+        message.className = "form-status success";
+        message.textContent = `Migration completed. ${migrated} records migrated, ${Number(result.skippedRecords || 0)} skipped.`;
+      }
+      adminState = sanitizeState(adminApi?.loadState(defaults) || clone(defaults));
+      renderAdmin();
+    } catch (error) {
+      if (message) {
+        message.className = "form-status error";
+        message.textContent = "Migration failed. Check Cloudflare D1 binding and migration status.";
+      }
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  document.querySelector("[data-export-csv]")?.addEventListener("click", async () => {
+    let exportLeads = adminState.leads;
+    if (adminApi?.isAuthenticated?.() && adminApi?.listLeads) {
+      const result = await adminApi.listLeads({ page: 1, pageSize: 500, sort: "newest" });
+      exportLeads = result.items || [];
+    }
     const rows = [
-      ["ID", "Name", "Company", "Email", "Phone", "Service", "Package", "Budget Value", "Budget Label", "Message", "Status", "Source", "Created At", "Updated At"],
+      ["ID", "Name", "Company", "Email", "Phone", "Service", "Package", "Budget Value", "Budget Label", "Message", "Timeline", "Status", "Source", "Created At", "Updated At"],
     ];
-    sortLeadsNewestFirst(adminState.leads).forEach((lead) => {
+    sortLeadsNewestFirst(exportLeads).forEach((lead) => {
       rows.push([
         lead.id,
         leadName(lead),
@@ -511,6 +591,7 @@ if (adminApp) {
         Number(lead.budget || 0),
         leadBudgetLabel(lead),
         leadMessage(lead),
+        lead.timeline,
         normalizedLeadStatus(lead.status),
         leadSource(lead),
         lead.createdAt || "",
@@ -535,13 +616,17 @@ if (adminApp) {
     });
   });
 
-  document.querySelector("[data-search='leads']")?.addEventListener("input", (event) => {
+  document.querySelector("[data-search='leads']")?.addEventListener("input", async (event) => {
     activeFilters.leadsSearch = event.target.value.toLowerCase();
+    activeFilters.leadsPage = 1;
+    await refreshLeadsFromServer();
     renderLeads();
   });
 
-  document.querySelector("[data-filter='leads']")?.addEventListener("change", (event) => {
+  document.querySelector("[data-filter='leads']")?.addEventListener("change", async (event) => {
     activeFilters.leadsStatus = event.target.value;
+    activeFilters.leadsPage = 1;
+    await refreshLeadsFromServer();
     renderLeads();
   });
 
@@ -557,21 +642,29 @@ if (adminApp) {
   leadDetailsModal?.addEventListener("click", (event) => {
     if (event.target === leadDetailsModal) leadDetailsModal.close();
   });
-  leadDetailsModal?.addEventListener("change", (event) => {
+  leadDetailsModal?.addEventListener("change", async (event) => {
     const select = event.target.closest("[data-lead-status-select]");
     if (!select) return;
-    updateLeadStatus(select.dataset.id, select.value);
+    await updateLeadStatus(select.dataset.id, select.value);
     openLeadDetails(select.dataset.id);
   });
 
-  adminApp.addEventListener("click", (event) => {
+  adminApp.addEventListener("click", async (event) => {
     const actionButton = event.target.closest("[data-admin-action]");
     if (!actionButton) return;
     const { adminAction, id } = actionButton.dataset;
 
     if (adminAction === "delete-lead") {
-      adminState.leads = adminState.leads.filter((lead) => lead.id !== id);
-      addActivity("Lead removed from queue");
+      if (adminApi?.isAuthenticated?.()) {
+        await adminApi.deleteLead(id);
+        await refreshLeadsFromServer();
+        await refreshStorageStatus();
+        renderAdmin();
+        return;
+      } else {
+        adminState.leads = adminState.leads.filter((lead) => lead.id !== id);
+        addActivity("Lead removed from queue");
+      }
     }
 
     if (adminAction === "view-lead") {
@@ -583,7 +676,13 @@ if (adminApp) {
       const lead = adminState.leads.find((item) => item.id === id);
       if (lead) {
         const currentIndex = leadStatuses.indexOf(normalizedLeadStatus(lead.status));
-        updateLeadStatus(id, leadStatuses[(currentIndex + 1) % leadStatuses.length]);
+        await updateLeadStatus(id, leadStatuses[(currentIndex + 1) % leadStatuses.length]);
+        if (adminApi?.isAuthenticated?.()) {
+          await refreshLeadsFromServer();
+          await refreshStorageStatus();
+          renderAdmin();
+          return;
+        }
       }
     }
 
@@ -637,7 +736,7 @@ if (adminApp) {
     renderAdmin();
   });
 
-  adminForm?.addEventListener("submit", (event) => {
+  adminForm?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const formData = new FormData(adminForm);
     const type = adminForm.dataset.entryType;
@@ -647,7 +746,7 @@ if (adminApp) {
       const email = textField(formData.get("email"));
       const phone = textField(formData.get("phone"));
       const budgetLabel = textField(formData.get("budgetLabel"), formData.get("budget"));
-      adminState.leads.unshift({
+      const lead = {
         id: makeId("lead"),
         client: formData.get("client"),
         name: formData.get("client"),
@@ -664,8 +763,18 @@ if (adminApp) {
         source: "Admin",
         createdAt: now,
         updatedAt: now,
-      });
-      addActivity(`${formData.get("client")} lead added`);
+      };
+      if (adminApi?.isAuthenticated?.()) {
+        await adminApi.createLead(lead);
+        await refreshLeadsFromServer();
+        await refreshStorageStatus();
+        adminModal?.close();
+        renderAdmin();
+        return;
+      } else {
+        adminState.leads.unshift(lead);
+        addActivity(`${formData.get("client")} lead added`);
+      }
     }
 
     if (type === "project") {
@@ -768,17 +877,48 @@ if (adminApp) {
     const activeProjects = adminState.projects.filter((project) => project.status !== "Done");
     const openTickets = adminState.tickets.filter((ticket) => ticket.status !== "Closed");
     const revenue = activeProjects.reduce((total, project) => total + Number(project.value || 0), 0);
+    const metrics = adminState.metrics || {};
     const leadMetric = document.querySelector("[data-metric='leads']");
     const projectMetric = document.querySelector("[data-metric='projects']");
     const revenueMetric = document.querySelector("[data-metric='revenue']");
     const supportMetric = document.querySelector("[data-metric='support']");
     const lastUpdated = document.querySelector("[data-last-updated]");
-    if (leadMetric) leadMetric.textContent = adminState.leads.length;
-    if (projectMetric) projectMetric.textContent = activeProjects.length;
-    if (revenueMetric) revenueMetric.textContent = formatMoney(revenue);
-    if (supportMetric) supportMetric.textContent = openTickets.length;
+    if (leadMetric) leadMetric.textContent = metrics.totalLeads ?? adminState.leads.length;
+    if (projectMetric) projectMetric.textContent = metrics.activeProjects ?? activeProjects.length;
+    if (revenueMetric) revenueMetric.textContent = formatMoney(metrics.openProjectValue ?? revenue);
+    if (supportMetric) supportMetric.textContent = metrics.openSupportTickets ?? openTickets.length;
     if (lastUpdated) {
       lastUpdated.textContent = `Updated ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+    }
+  };
+
+  const renderStorageStatus = () => {
+    const panel = document.querySelector("[data-storage-panel]");
+    if (!panel) return;
+    const counts = storageStatus?.counts || {};
+    const migration = storageStatus?.migration || {};
+    const setField = (name, value) => {
+      const field = panel.querySelector(`[data-storage-field="${name}"]`);
+      if (field) field.textContent = value;
+    };
+    const activeBadge = panel.querySelector("[data-storage-active]");
+    const migrationNote = panel.querySelector("[data-storage-migration]");
+    const migrateButton = panel.querySelector("[data-migrate-storage]");
+
+    setField("activeStorage", storageStatus?.activeStorage || "Unavailable");
+    setField("d1Connected", storageStatus?.d1Connected ? "Connected" : "Not connected");
+    setField("leads", counts.leads ?? 0);
+    setField("projects", counts.projects ?? 0);
+    setField("clients", counts.clients ?? 0);
+    setField("tickets", counts.tickets ?? 0);
+    if (activeBadge) activeBadge.textContent = storageStatus?.activeStorage || "Unavailable";
+    if (migrationNote) {
+      migrationNote.textContent = migration.completed
+        ? `Last migration completed at ${formatLeadDate(migration.updatedAt || migration.details?.migrationCompletedAt)}.`
+        : "Migration has not run yet. KV data will remain unchanged when migrated.";
+    }
+    if (migrateButton) {
+      migrateButton.hidden = Boolean(migration.completed) || !storageStatus?.d1Connected;
     }
   };
 
@@ -802,6 +942,7 @@ if (adminApp) {
           <article><span>Service</span><strong>${escapeHtml(textField(lead.service, "Website Inquiry"))}</strong></article>
           <article><span>Package</span><strong>${escapeHtml(textField(lead.packageName, "Not selected"))}</strong></article>
           <article><span>Budget Range</span><strong>${escapeHtml(leadBudgetLabel(lead))}</strong></article>
+          <article><span>Timeline</span><strong>${escapeHtml(textField(lead.timeline, "Not provided"))}</strong></article>
           <article><span>Source</span><strong>${escapeHtml(leadSource(lead))}</strong></article>
           <article><span>Submitted Date and Time</span><strong>${escapeHtml(formatLeadDate(lead.createdAt))}</strong></article>
           <article>
@@ -1083,6 +1224,7 @@ if (adminApp) {
     renderPricing();
     renderDemand();
     renderActivity();
+    renderStorageStatus();
     renderCharts();
   };
 

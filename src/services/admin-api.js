@@ -123,6 +123,81 @@
       return Promise.resolve({ ok: true, lead });
     },
 
+    async getStorageStatus() {
+      if (isApiMode() && getToken()) {
+        return requestJson("GET", "/api/admin/storage-status");
+      }
+
+      const state = readJson(stateKey, { leads: [], projects: [], clients: [], tickets: [] });
+      return {
+        activeStorage: "KV fallback",
+        d1Connected: false,
+        kvConnected: true,
+        counts: {
+          leads: (state.leads || []).length,
+          projects: (state.projects || []).length,
+          clients: (state.clients || []).length,
+          tickets: (state.tickets || []).length,
+        },
+        migration: { completed: false },
+      };
+    },
+
+    async listLeads(options = {}) {
+      const params = new URLSearchParams();
+      Object.entries(options).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "") params.set(key, value);
+      });
+
+      if (isApiMode() && getToken()) {
+        return requestJson("GET", `/api/admin/leads?${params.toString()}`);
+      }
+
+      const state = readJson(stateKey, { leads: [] });
+      return { items: state.leads || [], total: (state.leads || []).length, page: Number(options.page || 1), pageSize: Number(options.pageSize || 20) };
+    },
+
+    async createLead(lead) {
+      if (isApiMode() && getToken()) {
+        return requestJson("POST", "/api/leads/contact", lead);
+      }
+
+      const state = readJson(stateKey, { leads: [] });
+      state.leads = [lead, ...(state.leads || [])];
+      writeJson(stateKey, state);
+      return { ok: true, lead };
+    },
+
+    async updateLead(id, updates) {
+      if (isApiMode() && getToken()) {
+        return requestJson("PUT", `/api/admin/leads/${encodeURIComponent(id)}`, updates);
+      }
+
+      const state = readJson(stateKey, { leads: [] });
+      state.leads = (state.leads || []).map((lead) => (lead.id === id ? { ...lead, ...updates } : lead));
+      writeJson(stateKey, state);
+      return { ok: true };
+    },
+
+    async deleteLead(id) {
+      if (isApiMode() && getToken()) {
+        return requestJson("DELETE", `/api/admin/leads/${encodeURIComponent(id)}`);
+      }
+
+      const state = readJson(stateKey, { leads: [] });
+      state.leads = (state.leads || []).filter((lead) => lead.id !== id);
+      writeJson(stateKey, state);
+      return { ok: true };
+    },
+
+    async migrateStorage() {
+      if (!isApiMode() || !getToken()) {
+        throw new Error("Admin session required");
+      }
+
+      return requestJson("POST", "/api/admin/migrate-storage");
+    },
+
     getLogin() {
       return {
         sessionKey: config.login?.sessionKey || "abss-admin-auth",

@@ -2493,6 +2493,44 @@ h3 {
   margin-top: 18px;
 }
 
+.storage-card {
+  margin-top: 24px;
+}
+
+.storage-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.storage-grid div {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid rgba(13, 27, 42, 0.08);
+  border-radius: 8px;
+  background: rgba(245, 247, 250, 0.78);
+}
+
+.storage-grid span {
+  color: var(--gray);
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.storage-grid strong {
+  color: var(--navy);
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.storage-note {
+  margin: 16px 0;
+  color: var(--gray);
+  font-weight: 800;
+}
+
 .status-badge.rejected {
   color: #9f1239;
   background: rgba(244, 63, 94, 0.12);
@@ -3391,6 +3429,10 @@ h3 {
   }
 
   .lead-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .storage-grid {
     grid-template-columns: 1fr;
   }
 }
