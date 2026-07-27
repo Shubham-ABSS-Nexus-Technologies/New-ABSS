@@ -105,55 +105,64 @@ const projectModalType = document.querySelector("[data-project-modal-type]");
 const projectModalStatus = document.querySelector("[data-project-modal-status]");
 const projectModalTech = document.querySelector("[data-project-modal-tech]");
 const projectModalFeatures = document.querySelector("[data-project-modal-features]");
+const projectModalDemo = document.querySelector("[data-project-modal-demo]");
+const projectModalClose = projectModal?.querySelector(".modal-close");
+let previousProjectFocus = null;
 
 const projectDetails = {
   "Personal Portfolio Website": {
-    type: "Portfolio Website",
+    type: "Personal Portfolio Project",
     description:
-      "A personal portfolio website created to present skills, projects, leadership experience, contact options, and professional background in a clean responsive layout.",
+      "Purpose: Present projects, skills, leadership experience and professional contact information in one responsive personal website.",
     technologies: "HTML, CSS, JavaScript",
-    features: "Responsive sections, skills and projects showcase, contact form, social profile links",
+    features: "Responsive sections, skills showcase, projects area, contact options, social profile links",
     status: "Completed Demo Project",
+    demo: "Live Demo Available",
   },
   "Business Landing Page": {
-    type: "Landing Page",
+    type: "Internal Demo Project",
     description:
-      "A modern landing page concept for startups, agencies, and service businesses that need a focused first impression and clear call to action.",
+      "Purpose: Present a business service, benefits, trust-building content and contact actions in a focused page.",
     technologies: "HTML, CSS",
-    features: "Hero section, service highlights, call-to-action areas, contact section, mobile responsive layout",
+    features: "Hero section, service highlights, benefit blocks, call-to-action areas, contact section",
     status: "Completed — Demo Coming Soon",
+    demo: "Demo Coming Soon",
   },
   "College / Institute Website": {
-    type: "Educational Website",
+    type: "Internal Demo Project",
     description:
-      "An in-progress educational website concept for colleges, coaching institutes, and learning organizations.",
+      "Purpose: Organize academic, admission, facilities and institutional information for students and parents.",
     technologies: "HTML, CSS, JavaScript",
-    features: "Home, courses, faculty, admissions, institute overview, contact form",
+    features: "Institute overview, course sections, admission information, facilities, contact form",
     status: "Demo Project In Progress",
+    demo: "Demo In Progress",
   },
   "Restaurant Website": {
-    type: "Business Website",
+    type: "Internal Demo Project",
     description:
-      "A responsive restaurant website concept for cafes, restaurants, and food businesses to present menus, atmosphere, booking information, and location details.",
+      "Purpose: Present menu items, services, location information and reservation actions for a restaurant or cafe.",
     technologies: "HTML, CSS",
-    features: "Menu section, gallery, restaurant overview, booking/contact areas, location section",
+    features: "Menu presentation, gallery area, restaurant overview, reservation actions, location details",
     status: "Completed — Demo Coming Soon",
+    demo: "Demo Coming Soon",
   },
   "E-commerce Website Demo": {
-    type: "E-commerce Demo",
+    type: "Internal Demo Project",
     description:
-      "A coming-soon e-commerce interface concept for showing products, categories, shopping actions, and responsive product browsing.",
+      "Purpose: Show how products, categories, search, cart and customer-account flows can be structured.",
     technologies: "HTML, CSS, JavaScript",
-    features: "Product cards, category section, cart button, product filter, responsive layout",
+    features: "Product cards, category browsing, search concept, cart action, customer-account flow",
     status: "Demo Project Coming Soon",
+    demo: "Coming Soon",
   },
   "Business Dashboard UI": {
-    type: "Dashboard UI",
+    type: "Internal Demo Project",
     description:
-      "An in-progress dashboard interface concept for business analytics, admin panels, management workflows, and overview reporting.",
+      "Purpose: Organize operational information for leads, projects, clients, metrics and management tasks.",
     technologies: "HTML, CSS, JavaScript",
-    features: "Sidebar navigation, dashboard cards, chart section, user management layout",
+    features: "Sidebar navigation, metric cards, chart area, lead/project sections, management layout",
     status: "Demo Project In Progress",
+    demo: "Demo In Progress",
   },
 };
 
@@ -170,16 +179,23 @@ document.querySelectorAll("[data-project-modal]").forEach((button) => {
     if (projectModalStatus) projectModalStatus.textContent = detail.status;
     if (projectModalTech) projectModalTech.textContent = detail.technologies;
     if (projectModalFeatures) projectModalFeatures.textContent = detail.features;
+    if (projectModalDemo) projectModalDemo.textContent = detail.demo;
+    previousProjectFocus = document.activeElement;
     projectModal.showModal();
+    projectModalClose?.focus();
   });
 });
 
-document.querySelector(".modal-close")?.addEventListener("click", () => {
+projectModalClose?.addEventListener("click", () => {
   projectModal?.close();
 });
 
 document.querySelector("[data-close-project-modal]")?.addEventListener("click", () => {
   projectModal?.close();
+});
+
+projectModal?.addEventListener("close", () => {
+  previousProjectFocus?.focus?.();
 });
 
 const packageModal = document.querySelector(".package-modal");
