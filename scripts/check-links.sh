@@ -10,6 +10,21 @@ clean_route_target() {
   awk -v route="$route" '$1 == route && $3 == "200" { print $2; exit }' _redirects
 }
 
+resolve_existing_target() {
+  local target_path="$1"
+  local route_target="$2"
+
+  if [ ! -e "$target_path" ] && [ -n "$route_target" ]; then
+    target_path=".$route_target"
+  fi
+
+  if [ ! -e "$target_path" ] && [ -f "${target_path}.html" ]; then
+    target_path="${target_path}.html"
+  fi
+
+  printf '%s\n' "$target_path"
+}
+
 while IFS= read -r file; do
   while IFS= read -r ref; do
     case "$ref" in
@@ -28,9 +43,7 @@ while IFS= read -r file; do
     fi
 
     route_target="$(clean_route_target "$clean_ref")"
-    if [ ! -e "$target_path" ] && [ -n "$route_target" ]; then
-      target_path=".$route_target"
-    fi
+    target_path="$(resolve_existing_target "$target_path" "$route_target")"
 
     if [ ! -e "$target_path" ]; then
       echo "$file -> missing $ref"
@@ -63,9 +76,7 @@ if [ -f "_redirects" ]; then
     esac
 
     route_target="$(clean_route_target "$target")"
-    if [ ! -e "$target_path" ] && [ -n "$route_target" ]; then
-      target_path=".$route_target"
-    fi
+    target_path="$(resolve_existing_target "$target_path" "$route_target")"
 
     if [ ! -e "$target_path" ]; then
       echo "_redirects -> missing $target"

@@ -67,17 +67,23 @@ https://www.abssnexus.in/* https://abssnexus.in/:splat 301
 /support-policy/ /support-policy 301
 /sitemap/ /sitemap 301
 
-/admin-login.html /src/admin/admin-login.html 301
-/admin-dashboard.html /src/admin/admin-dashboard.html 301
-/admin-leads.html /src/admin/admin-leads.html 301
-/admin-projects.html /src/admin/admin-projects.html 301
-/admin-clients.html /src/admin/admin-clients.html 301
-/admin-support.html /src/admin/admin-support.html 301
-/admin-pricing.html /src/admin/admin-pricing.html 301
-/src/admin/admin-login /src/admin/admin-login.html 200
-/src/admin/admin-dashboard /src/admin/admin-dashboard.html 200
-/src/admin/admin-leads /src/admin/admin-leads.html 200
-/src/admin/admin-projects /src/admin/admin-projects.html 200
-/src/admin/admin-clients /src/admin/admin-clients.html 200
-/src/admin/admin-support /src/admin/admin-support.html 200
-/src/admin/admin-pricing /src/admin/admin-pricing.html 200
+/admin-login /src/admin/admin-login 301
+/admin-login.html /src/admin/admin-login 301
+
+/admin-dashboard /src/admin/admin-dashboard 301
+/admin-dashboard.html /src/admin/admin-dashboard 301
+
+/admin-leads /src/admin/admin-leads 301
+/admin-leads.html /src/admin/admin-leads 301
+
+/admin-projects /src/admin/admin-projects 301
+/admin-projects.html /src/admin/admin-projects 301
+
+/admin-clients /src/admin/admin-clients 301
+/admin-clients.html /src/admin/admin-clients 301
+
+/admin-support /src/admin/admin-support 301
+/admin-support.html /src/admin/admin-support 301
+
+/admin-pricing /src/admin/admin-pricing 301
+/admin-pricing.html /src/admin/admin-pricing 301
