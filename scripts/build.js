@@ -41,9 +41,27 @@ for (const entry of ["src", "public"]) {
   copyRecursive(path.join(rootDir, entry), path.join(distDir, entry));
 }
 
+const homepageSource = path.join(rootDir, "src", "pages", "index.html");
+const homepageDestination = path.join(distDir, "index.html");
+
+if (!fs.existsSync(homepageSource)) {
+  throw new Error("Homepage source file is missing: src/pages/index.html");
+}
+
+fs.copyFileSync(homepageSource, homepageDestination);
+
+const notFoundSource = path.join(rootDir, "src", "pages", "404.html");
+if (fs.existsSync(notFoundSource)) {
+  fs.copyFileSync(notFoundSource, path.join(distDir, "404.html"));
+}
+
 copyTextFile("robots.txt");
 copyTextFile("sitemap.xml");
 copyTextFile("_headers", (content) => (includeAdmin ? content : content.replace(/^\/(?:src\/)?admin[^\n]*(?:\n  .*)*\n?/gm, "")));
 copyTextFile("_redirects", (content) => (includeAdmin ? content : content.replace(/^\/(?:src\/)?admin[^\n]*\n/gm, "")));
+
+if (!fs.existsSync(path.join(distDir, "index.html"))) {
+  throw new Error("Cloudflare build failed: dist/index.html was not created.");
+}
 
 console.log(`Build complete. Admin pages ${includeAdmin ? "included" : "excluded"} in dist.`);
