@@ -37,6 +37,12 @@ The first migration file is:
 migrations/0001_create_abss_database.sql
 ```
 
+The second migration removes only known development/demo admin records from D1 so dashboard totals match visible real leads:
+
+```txt
+migrations/0002_remove_stale_demo_data.sql
+```
+
 ### Production KV to D1 Migration
 
 After deployment and after `ABSS_DB` is bound, log in to the secure Admin Dashboard and use the Storage section button:

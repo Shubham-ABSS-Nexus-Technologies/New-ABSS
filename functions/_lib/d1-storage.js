@@ -1,6 +1,34 @@
 const allowedLeadStatuses = new Set(["New", "Follow Up", "Call Booked", "Proposal Sent", "Converted", "Rejected"]);
 const stateKey = "admin-state.json";
 const migrationKey = "kv_to_d1_migration_v1";
+const staleDemoIds = new Set([
+  "lead-1",
+  "lead-2",
+  "lead-3",
+  "lead-4",
+  "project-1",
+  "project-2",
+  "project-3",
+  "project-4",
+  "client-1",
+  "client-2",
+  "client-3",
+  "ticket-1",
+  "ticket-2",
+  "ticket-3",
+  "price-1",
+  "price-2",
+  "price-3",
+]);
+const staleDemoActivity = new Set([
+  "Proposal shared with EduSpark Institute",
+  "Payment reminder added for Restaurant website",
+  "Design review completed for Dashboard UI",
+  "Backend database initialized",
+  "Admin system connected to local API",
+  "Admin function connected",
+  "Ready for cloud persistence",
+]);
 
 const text = (value, fallback = "", maxLength = 500) => String(value ?? fallback).trim().slice(0, maxLength);
 const number = (value) => {
@@ -406,37 +434,62 @@ export const migrateKvStateToD1 = async (db, kv) => {
   const counts = { leadsMigrated: 0, projectsMigrated: 0, clientsMigrated: 0, ticketsMigrated: 0, pricingMigrated: 0, activityMigrated: 0, skippedRecords: 0, migrationCompletedAt: startedAt };
 
   for (const item of state.leads || []) {
+    if (staleDemoIds.has(text(item.id, "", 120))) {
+      counts.skippedRecords += 1;
+      continue;
+    }
     const lead = normalizeLead(item, startedAt);
     const result = await run(db, "INSERT OR IGNORE INTO leads (id, client, name, company, email, phone, contact, service, package_name, budget, budget_label, message, timeline, status, source, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", lead.id, lead.client, lead.name, lead.company, lead.email, lead.phone, lead.contact, lead.service, lead.packageName, lead.budget, lead.budgetLabel, lead.message, lead.timeline, lead.status, lead.source, lead.createdAt, lead.updatedAt);
     counts.leadsMigrated += Number(result.meta?.changes || 0);
     if (!result.meta?.changes) counts.skippedRecords += 1;
   }
   for (const item of state.projects || []) {
+    if (staleDemoIds.has(text(item.id, "", 120))) {
+      counts.skippedRecords += 1;
+      continue;
+    }
     const project = normalizeProject(item);
     const result = await run(db, "INSERT OR IGNORE INTO projects (id, name, client_name, service, value, status, start_date, deadline, description, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", project.id, project.name, project.client, project.service, project.value, project.status, project.startDate, project.deadline, project.description, project.createdAt, project.updatedAt);
     counts.projectsMigrated += Number(result.meta?.changes || 0);
     if (!result.meta?.changes) counts.skippedRecords += 1;
   }
   for (const item of state.clients || []) {
+    if (staleDemoIds.has(text(item.id, "", 120))) {
+      counts.skippedRecords += 1;
+      continue;
+    }
     const client = normalizeClient(item);
     const result = await run(db, "INSERT OR IGNORE INTO clients (id, name, company, email, phone, status, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", client.id, client.name, client.company, client.email, client.phone, client.status, client.notes, client.createdAt, client.updatedAt);
     counts.clientsMigrated += Number(result.meta?.changes || 0);
     if (!result.meta?.changes) counts.skippedRecords += 1;
   }
   for (const item of state.tickets || []) {
+    if (staleDemoIds.has(text(item.id, "", 120))) {
+      counts.skippedRecords += 1;
+      continue;
+    }
     const ticket = normalizeTicket(item);
     const result = await run(db, "INSERT OR IGNORE INTO tickets (id, client_name, email, subject, message, priority, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", ticket.id, ticket.client, ticket.email, ticket.subject, ticket.message, ticket.priority, ticket.status, ticket.createdAt, ticket.updatedAt);
     counts.ticketsMigrated += Number(result.meta?.changes || 0);
     if (!result.meta?.changes) counts.skippedRecords += 1;
   }
   for (const item of state.pricing || []) {
+    if (staleDemoIds.has(text(item.id, "", 120))) {
+      counts.skippedRecords += 1;
+      continue;
+    }
     const price = normalizePricing(item);
     const result = await run(db, "INSERT OR IGNORE INTO pricing (id, name, starting_price, description, features_json, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", price.id, price.name, price.startingPrice, price.description, price.featuresJson, price.status, price.createdAt, price.updatedAt);
     counts.pricingMigrated += Number(result.meta?.changes || 0);
     if (!result.meta?.changes) counts.skippedRecords += 1;
   }
   for (const item of state.activity || []) {
-    await addActivity(db, { message: String(item || "Legacy admin activity"), type: "migration", createdAt: startedAt });
+    const message = String(item || "Legacy admin activity");
+    if (staleDemoActivity.has(message)) {
+      counts.skippedRecords += 1;
+      continue;
+    }
+    await addActivity(db, { message, type: "migration", createdAt: startedAt });
     counts.activityMigrated += 1;
   }
   await run(db, "INSERT OR REPLACE INTO app_metadata (key, value, updated_at) VALUES (?, ?, ?)", migrationKey, JSON.stringify(counts), startedAt);

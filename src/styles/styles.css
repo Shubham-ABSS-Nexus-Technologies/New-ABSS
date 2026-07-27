@@ -1918,6 +1918,13 @@ h3 {
   overflow-x: auto;
 }
 
+.admin-count-note {
+  margin: 0 0 12px;
+  color: var(--gray);
+  font-size: 0.86rem;
+  font-weight: 850;
+}
+
 .admin-table {
   width: 100%;
   min-width: 640px;

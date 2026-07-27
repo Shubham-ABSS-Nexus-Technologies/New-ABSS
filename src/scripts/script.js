@@ -388,13 +388,18 @@ if (adminApp) {
     "Admin function connected",
     "Ready for cloud persistence",
   ]);
-  const sanitizeState = (state) => ({
+  const sanitizeState = (state = {}) => ({
+    ...state,
     leads: (state.leads || []).filter((item) => !staleDemoIds.has(item.id)),
     projects: (state.projects || []).filter((item) => !staleDemoIds.has(item.id)),
     clients: (state.clients || []).filter((item) => !staleDemoIds.has(item.id)),
     tickets: (state.tickets || []).filter((item) => !staleDemoIds.has(item.id)),
     pricing: (state.pricing || []).filter((item) => !staleDemoIds.has(item.id)),
     activity: (state.activity || []).filter((item) => !staleDemoActivity.has(item)),
+    metrics: state.metrics || {},
+    leadsTotal: Number(state.leadsTotal || 0),
+    leadsPage: Number(state.leadsPage || 1),
+    leadsPageSize: Number(state.leadsPageSize || 20),
   });
   const readState = () => {
     return sanitizeState(adminApi?.loadState(defaults) || clone(defaults));
@@ -496,7 +501,7 @@ if (adminApp) {
         sort: "newest",
       });
       adminState.leads = result.items || [];
-      adminState.leadsTotal = result.total || adminState.leads.length;
+      adminState.leadsTotal = Number.isFinite(Number(result.total)) ? Number(result.total) : adminState.leads.length;
       adminState.leadsPage = result.page || activeFilters.leadsPage;
       adminState.leadsPageSize = result.pageSize || activeFilters.leadsPageSize;
     } catch (error) {
@@ -883,7 +888,8 @@ if (adminApp) {
     const revenueMetric = document.querySelector("[data-metric='revenue']");
     const supportMetric = document.querySelector("[data-metric='support']");
     const lastUpdated = document.querySelector("[data-last-updated]");
-    if (leadMetric) leadMetric.textContent = metrics.totalLeads ?? adminState.leads.length;
+    const totalLeadCount = storageStatus?.counts?.leads ?? metrics.totalLeads ?? (adminState.leadsTotal || adminState.leads.length);
+    if (leadMetric) leadMetric.textContent = totalLeadCount;
     if (projectMetric) projectMetric.textContent = metrics.activeProjects ?? activeProjects.length;
     if (revenueMetric) revenueMetric.textContent = formatMoney(metrics.openProjectValue ?? revenue);
     if (supportMetric) supportMetric.textContent = metrics.openSupportTickets ?? openTickets.length;
@@ -965,6 +971,7 @@ if (adminApp) {
   const renderLeads = () => {
     const table = document.querySelector("[data-leads-table]");
     if (!table) return;
+    const countNote = document.querySelector("[data-leads-count-note]");
     const rows = sortLeadsNewestFirst(adminState.leads).filter((lead) => {
       const searchText = [
         leadName(lead),
@@ -982,6 +989,11 @@ if (adminApp) {
       const matchesStatus = activeFilters.leadsStatus === "all" || normalizedLeadStatus(lead.status) === activeFilters.leadsStatus;
       return matchesSearch && matchesStatus;
     });
+    const displayedCount = rows.length;
+    const filteredTotal = adminState.leadsTotal || rows.length;
+    if (countNote) {
+      countNote.textContent = `Showing ${displayedCount} of ${filteredTotal} inquiries`;
+    }
     if (!rows.length) {
       table.innerHTML = emptyRow("No leads yet. New website inquiries will appear here.", 6);
       return;
