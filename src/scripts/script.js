@@ -273,7 +273,7 @@ document.querySelectorAll("form.contact-form").forEach((form) => {
     try {
       await window.AbssAdminApi?.queueContactLead(formToLead(form));
       form.reset();
-      setFormStatus(form, "success", "Thank you. Your request has been received and our team will contact you soon.");
+      setFormStatus(form, "success", "Thank you. Your request has been received and ABSS Nexus Technologies will contact you soon.");
     } catch (error) {
       setFormStatus(form, "error", "Something went wrong. Please try again or contact us on WhatsApp.");
     } finally {
