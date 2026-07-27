@@ -1,0 +1,96 @@
+/index.html / 301
+/src/pages/index / 301
+/src/pages/index.html / 301
+
+/about.html /about 301
+/src/pages/about /about 301
+/src/pages/about.html /about 301
+
+/services.html /services 301
+/src/pages/services /services 301
+/src/pages/services.html /services 301
+
+/projects.html /projects 301
+/src/pages/projects /projects 301
+/src/pages/projects.html /projects 301
+
+/contact.html /contact 301
+/src/pages/contact /contact 301
+/src/pages/contact.html /contact 301
+
+/privacy-policy.html /privacy-policy 301
+/src/pages/privacy-policy /privacy-policy 301
+/src/pages/privacy-policy.html /privacy-policy 301
+
+/terms-conditions /terms-and-conditions 301
+/terms-conditions.html /terms-and-conditions 301
+/terms-and-conditions.html /terms-and-conditions 301
+/src/pages/terms-conditions /terms-and-conditions 301
+/src/pages/terms-conditions.html /terms-and-conditions 301
+
+/disclaimer.html /disclaimer 301
+/src/pages/disclaimer /disclaimer 301
+/src/pages/disclaimer.html /disclaimer 301
+
+/refund-policy.html /refund-policy 301
+/src/pages/refund-policy /refund-policy 301
+/src/pages/refund-policy.html /refund-policy 301
+
+/support-policy.html /support-policy 301
+/src/pages/support-policy /support-policy 301
+/src/pages/support-policy.html /support-policy 301
+
+/sitemap.html /sitemap 301
+/src/pages/sitemap /sitemap 301
+/src/pages/sitemap.html /sitemap 301
+
+/service-website-development /services/website-development 301
+/service-website-development.html /services/website-development 301
+/src/pages/service-website-development /services/website-development 301
+/src/pages/service-website-development.html /services/website-development 301
+
+/case-study-template.html /projects 301
+/src/pages/case-study-template /projects 301
+/src/pages/case-study-template.html /projects 301
+
+/about/ /about 301
+/services/ /services 301
+/services/website-development/ /services/website-development 301
+/projects/ /projects 301
+/contact/ /contact 301
+/privacy-policy/ /privacy-policy 301
+/terms-and-conditions/ /terms-and-conditions 301
+/disclaimer/ /disclaimer 301
+/refund-policy/ /refund-policy 301
+/support-policy/ /support-policy 301
+/sitemap/ /sitemap 301
+
+/ /src/pages/index.html 200
+/about /src/pages/about.html 200
+/services /src/pages/services.html 200
+/services/website-development /src/pages/service-website-development.html 200
+/projects /src/pages/projects.html 200
+/contact /src/pages/contact.html 200
+/privacy-policy /src/pages/privacy-policy.html 200
+/terms-and-conditions /src/pages/terms-conditions.html 200
+/disclaimer /src/pages/disclaimer.html 200
+/refund-policy /src/pages/refund-policy.html 200
+/support-policy /src/pages/support-policy.html 200
+/sitemap /src/pages/sitemap.html 200
+
+/admin-login.html /src/admin/admin-login.html 301
+/admin-dashboard.html /src/admin/admin-dashboard.html 301
+/admin-leads.html /src/admin/admin-leads.html 301
+/admin-projects.html /src/admin/admin-projects.html 301
+/admin-clients.html /src/admin/admin-clients.html 301
+/admin-support.html /src/admin/admin-support.html 301
+/admin-pricing.html /src/admin/admin-pricing.html 301
+/src/admin/admin-login /src/admin/admin-login.html 200
+/src/admin/admin-dashboard /src/admin/admin-dashboard.html 200
+/src/admin/admin-leads /src/admin/admin-leads.html 200
+/src/admin/admin-projects /src/admin/admin-projects.html 200
+/src/admin/admin-clients /src/admin/admin-clients.html 200
+/src/admin/admin-support /src/admin/admin-support.html 200
+/src/admin/admin-pricing /src/admin/admin-pricing.html 200
+
+/* /src/pages/404.html 404

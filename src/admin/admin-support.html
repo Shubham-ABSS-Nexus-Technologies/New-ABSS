@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow, noarchive" />
+    <meta
+      name="description"
+      content="Admin Support for ABSS Nexus Technologies."
+    />
+    <meta property="og:title" content="Admin Support | ABSS Nexus Technologies" />
+    <meta property="og:description" content="Manage ABSS Nexus Technologies admin operations." />
+    <meta property="og:image" content="https://abss-nexus.netlify.app/Images/LogoGenerated.png" />
+    <meta property="og:url" content="https://abss-nexus.netlify.app/admin-dashboard.html" />
+    <title>Admin Support | ABSS Nexus Technologies</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/styles/styles.css" />
+  </head>
+  <body>
+    <main class="admin-page" data-admin-app>
+      <section class="admin-shell" data-admin-shell hidden>
+        <div class="admin-brandbar">
+          <a class="admin-brand" href="../pages/index.html" aria-label="ABSS Nexus Technologies home">
+            <img src="/public/assets/images/LogoGenerated.png" alt="ABSS Nexus Technologies logo" />
+            <span>Operations Console</span>
+          </a>
+          <div class="admin-session">
+            <span>Authenticated session</span>
+            <strong>ABSS Nexus Technologies</strong>
+          </div>
+        </div>
+
+        <div class="admin-topbar">
+          <div>
+            <p class="eyebrow">Support</p>
+            <h1>Tickets and maintenance</h1>
+          </div>
+          <div class="admin-topbar-actions">
+            <button type="button" data-export-csv>Export CSV</button>
+            <button type="button" data-reset-admin>Reset Data</button>
+            <button type="button" class="active" data-logout>Logout</button>
+          </div>
+        </div>
+
+        <div class="admin-insight-strip" aria-label="Admin workspace status">
+          <article>
+            <span>Workspace</span>
+            <strong>Operations</strong>
+          </article>
+          <article>
+            <span>Storage</span>
+            <strong>Server API</strong>
+          </article>
+          <article>
+            <span>Security</span>
+            <strong>Login Enabled</strong>
+          </article>
+          <article>
+            <span>Section</span>
+            <strong>Support</strong>
+          </article>
+        </div>
+
+        <section class="admin-overview">
+          <div class="admin-metric-grid">
+            <article>
+              <span>Leads</span>
+              <strong data-metric="leads">0</strong>
+              <small data-metric-note="leads">Total inquiries</small>
+            </article>
+            <article>
+              <span>Active Projects</span>
+              <strong data-metric="projects">0</strong>
+              <small data-metric-note="projects">In delivery</small>
+            </article>
+            <article>
+              <span>Pipeline Value</span>
+              <strong data-metric="revenue">Rs 0</strong>
+              <small data-metric-note="revenue">Open project value</small>
+            </article>
+            <article>
+              <span>Support Tickets</span>
+              <strong data-metric="support">0</strong>
+              <small data-metric-note="support">Open tickets</small>
+            </article>
+          </div>
+        </section>
+
+        <nav class="admin-tabs" aria-label="Admin dashboard sections">
+          <a href="admin-dashboard.html" class="">Overview</a>
+          <a href="admin-leads.html" class="">Leads</a>
+          <a href="admin-projects.html" class="">Projects</a>
+          <a href="admin-clients.html" class="">Clients</a>
+          <a href="admin-support.html" class="active">Support</a>
+          <a href="admin-pricing.html" class="">Pricing</a>
+        </nav>
+
+        <section class="admin-panel active" data-admin-panel="support">
+          <article class="admin-card">
+            <div class="admin-card-header">
+              <div>
+                <p class="eyebrow">Support</p>
+                <h2>Tickets and maintenance</h2>
+              </div>
+              <button type="button" class="admin-primary-action" data-open-modal="ticket">Add Ticket</button>
+            </div>
+            <div class="admin-table-wrap">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Client</th>
+                    <th>Issue</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody data-support-table></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+      </section>
+
+      <dialog class="admin-modal" data-admin-modal>
+        <button class="modal-close admin-modal-close" type="button" data-close-admin-modal aria-label="Close modal">X</button>
+        <form class="contact-form admin-entry-form" data-admin-form></form>
+      </dialog>
+    </main>
+    <script src="/src/config/admin-config.js"></script>
+    <script src="/src/services/admin-api.js"></script>
+    <script src="/src/scripts/admin-auth-guard.js"></script>
+    <script src="/src/scripts/script.js"></script>
+  </body>
+</html>

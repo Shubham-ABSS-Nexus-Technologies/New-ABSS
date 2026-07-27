@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow, noarchive" />
+    <meta name="description" content="Admin login for ABSS Nexus Technologies." />
+    <meta property="og:title" content="Admin Login | ABSS Nexus Technologies" />
+    <meta property="og:description" content="Secure admin access for ABSS Nexus Technologies." />
+    <meta property="og:image" content="https://abss-nexus.netlify.app/Images/LogoGenerated.png" />
+    <meta property="og:url" content="https://abss-nexus.netlify.app/admin-login.html" />
+    <title>Admin Login | ABSS Nexus Technologies</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/styles/styles.css" />
+  </head>
+  <body>
+    <main class="admin-page" data-admin-login-page>
+      <section class="admin-login-screen">
+        <form class="admin-login-card" data-login-form autocomplete="off">
+          <img src="/public/assets/images/LogoGenerated.png" alt="ABSS Nexus Technologies logo" />
+          <p class="eyebrow">Secure Admin</p>
+          <h1>Admin Login</h1>
+          <label>
+            Username
+            <input type="text" name="username" autocomplete="off" placeholder="Enter admin username" required />
+          </label>
+          <label>
+            Password
+            <input type="password" name="password" autocomplete="new-password" placeholder="Enter admin password" required />
+          </label>
+          <button class="btn primary" type="submit">Login</button>
+          <p class="form-note" data-login-message>Authorized access only.</p>
+          <a class="card-link" href="../pages/index.html">Back to website</a>
+        </form>
+      </section>
+    </main>
+    <script src="/src/config/admin-config.js"></script>
+    <script src="/src/services/admin-api.js"></script>
+    <script src="/src/scripts/admin-auth-guard.js"></script>
+    <script src="/src/scripts/script.js"></script>
+  </body>
+</html>
