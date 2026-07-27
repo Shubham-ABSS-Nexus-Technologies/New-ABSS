@@ -7,6 +7,7 @@ const localPageRoutes = {
   "/services": "/src/pages/services.html",
   "/services/website-development": "/src/pages/service-website-development.html",
   "/services/ui-ux-design": "/src/pages/service-ui-ux-design.html",
+  "/services/website-maintenance": "/src/pages/service-website-maintenance.html",
   "/projects": "/src/pages/projects.html",
   "/contact": "/src/pages/contact.html",
   "/privacy-policy": "/src/pages/privacy-policy.html",
