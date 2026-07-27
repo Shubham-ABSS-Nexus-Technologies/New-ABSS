@@ -10,6 +10,7 @@ const localPageRoutes = {
   "/services/website-maintenance": "/src/pages/service-website-maintenance.html",
   "/projects": "/src/pages/projects.html",
   "/contact": "/src/pages/contact.html",
+  "/pricing": "/src/pages/pricing.html",
   "/privacy-policy": "/src/pages/privacy-policy.html",
   "/terms-and-conditions": "/src/pages/terms-conditions.html",
   "/disclaimer": "/src/pages/disclaimer.html",
