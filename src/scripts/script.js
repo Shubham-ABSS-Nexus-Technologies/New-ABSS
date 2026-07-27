@@ -82,6 +82,26 @@ if (navToggle && navLinks) {
   });
 }
 
+const faqToggles = document.querySelectorAll("[data-faq-toggle]");
+
+faqToggles.forEach((button) => {
+  button.addEventListener("click", () => {
+    const answerId = button.getAttribute("aria-controls");
+    const answer = answerId ? document.getElementById(answerId) : null;
+    const willOpen = button.getAttribute("aria-expanded") !== "true";
+
+    faqToggles.forEach((item) => {
+      const itemAnswerId = item.getAttribute("aria-controls");
+      const itemAnswer = itemAnswerId ? document.getElementById(itemAnswerId) : null;
+      item.setAttribute("aria-expanded", "false");
+      if (itemAnswer) itemAnswer.hidden = true;
+    });
+
+    button.setAttribute("aria-expanded", String(willOpen));
+    if (answer) answer.hidden = !willOpen;
+  });
+});
+
 const projectFilterButtons = document.querySelectorAll("[data-project-filter]");
 const projectCards = document.querySelectorAll("[data-project-category]");
 

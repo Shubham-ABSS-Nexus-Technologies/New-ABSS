@@ -614,6 +614,105 @@ h3 {
   padding-top: 18px;
 }
 
+.service-mini-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-top: 24px;
+  padding: 22px;
+  border: 1px solid rgba(13, 27, 42, 0.09);
+  border-radius: 8px;
+  background: var(--white);
+  box-shadow: 0 18px 50px rgba(13, 27, 42, 0.07);
+}
+
+.service-mini-cta p,
+.service-note {
+  margin: 0;
+  color: var(--gray);
+  line-height: 1.65;
+}
+
+.service-mini-cta p {
+  color: var(--navy);
+  font-weight: 900;
+}
+
+.service-deliverables span {
+  border-radius: 8px;
+}
+
+.service-process-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.service-process-grid article {
+  min-height: 190px;
+}
+
+.service-process-grid p {
+  margin: 12px 0 0;
+  color: var(--gray);
+  line-height: 1.65;
+}
+
+.service-note {
+  margin-top: 18px;
+}
+
+.faq-list {
+  display: grid;
+  gap: 12px;
+}
+
+.faq-item {
+  border: 1px solid rgba(13, 27, 42, 0.09);
+  border-radius: 8px;
+  background: var(--white);
+  box-shadow: 0 18px 50px rgba(13, 27, 42, 0.07);
+  overflow: hidden;
+}
+
+.faq-question {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 58px;
+  padding: 18px 20px;
+  color: var(--navy);
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-weight: 900;
+  text-align: left;
+  cursor: pointer;
+}
+
+.faq-question::after {
+  content: "+";
+  flex: 0 0 auto;
+  margin-left: 18px;
+  color: var(--blue);
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.faq-question[aria-expanded="true"]::after {
+  content: "-";
+}
+
+.faq-answer {
+  padding: 0 20px 20px;
+}
+
+.faq-answer p {
+  margin: 0;
+  color: var(--gray);
+  line-height: 1.65;
+}
+
 .package-action {
   display: inline-flex;
   align-items: center;
@@ -2864,6 +2963,10 @@ h3 {
   .featured-project-copy {
     padding: 10px 6px 8px;
   }
+
+  .service-process-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 620px) {
@@ -2960,7 +3063,8 @@ h3 {
   .hero-card-footer,
   .footer-lower,
   .footer-links,
-  .whatsapp-card {
+  .whatsapp-card,
+  .service-mini-cta {
     flex-direction: column;
     align-items: flex-start;
   }
@@ -2998,6 +3102,10 @@ h3 {
   .pricing-editor-grid,
   .admin-section-grid,
   .admin-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .service-process-grid {
     grid-template-columns: 1fr;
   }
 
