@@ -4,8 +4,8 @@
     "@type": "ProfessionalService",
     name: "ABSS Nexus Technologies",
     alternateName: "ABSS Nexus",
-    url: "https://shubhambca.in/",
-    logo: "https://shubhambca.in/public/assets/images/LogoGenerated.png",
+    url: "https://abssnexus.in/",
+    logo: "https://abssnexus.in/public/assets/images/LogoGenerated.png",
     description:
       "ABSS Nexus Technologies provides website development, application development, UI/UX design, landing pages, portfolios, maintenance, and digital solutions.",
     telephone: "+918757928673",

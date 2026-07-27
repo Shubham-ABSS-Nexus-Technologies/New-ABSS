@@ -48,7 +48,13 @@ if [ -f "_redirects" ]; then
     esac
 
     case "$target" in
-      http*|/*)
+      http*)
+        continue
+        ;;
+    esac
+
+    case "$target" in
+      /*)
         target_path=".${target}"
         ;;
       *)

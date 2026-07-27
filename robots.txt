@@ -8,4 +8,4 @@ Disallow: /admin-support.html
 Disallow: /admin-pricing.html
 Disallow: /src/admin/
 
-Sitemap: https://shubhambca.in/sitemap.xml
+Sitemap: https://abssnexus.in/sitemap.xml
