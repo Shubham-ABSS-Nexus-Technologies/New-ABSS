@@ -8,6 +8,7 @@ const defaultState = {
 };
 
 const stateKey = "admin-state.json";
+const allowedLeadStatuses = new Set(["New", "Follow Up", "Call Booked", "Proposal Sent", "Converted", "Rejected"]);
 const jsonHeaders = {
   "Content-Type": "application/json; charset=utf-8",
   "X-Frame-Options": "DENY",
@@ -100,7 +101,7 @@ const readState = async (env) => {
 
 const writeState = async (env, state) => {
   const normalizedState = {
-    leads: Array.isArray(state.leads) ? state.leads : [],
+    leads: Array.isArray(state.leads) ? state.leads.map((lead) => normalizeLead(lead, { preserveCreatedAt: true })) : [],
     projects: Array.isArray(state.projects) ? state.projects : [],
     clients: Array.isArray(state.clients) ? state.clients : [],
     tickets: Array.isArray(state.tickets) ? state.tickets : [],
@@ -112,14 +113,61 @@ const writeState = async (env, state) => {
   return normalizedState;
 };
 
-const normalizeLead = (input) => ({
-  id: input.id || crypto.randomUUID(),
-  client: String(input.client || input.name || "Website Inquiry").trim(),
-  service: String(input.service || input.package || input.formName || "Website Inquiry").trim(),
-  budget: Number(input.budget || 0),
-  status: String(input.status || "New").trim(),
-  contact: String(input.contact || [input.email, input.phone].filter(Boolean).join(" / ")).trim(),
-});
+const trimText = (value, maxLength = 160) => String(value || "").trim().slice(0, maxLength);
+const validDateString = (value) => {
+  const text = trimText(value, 40);
+  return text && !Number.isNaN(Date.parse(text)) ? text : "";
+};
+const normalizeStatus = (value) => {
+  const status = trimText(value, 40);
+  return allowedLeadStatuses.has(status) ? status : "New";
+};
+const normalizeBudget = (value, label) => {
+  const numericValue = Number(value);
+  if (Number.isFinite(numericValue) && numericValue >= 0) return numericValue;
+  const firstBudgetNumber = trimText(label, 120).match(/\d[\d,]*/)?.[0]?.replaceAll(",", "");
+  return firstBudgetNumber ? Number(firstBudgetNumber) : 0;
+};
+const leadSourceFromForm = (value) => {
+  const source = trimText(value, 120).toLowerCase();
+  if (source.includes("pricing") || source.includes("package")) return "Pricing Form";
+  if (source.includes("maintenance")) return "Maintenance Form";
+  if (source.includes("feedback")) return "Feedback Form";
+  return "Contact Form";
+};
+const normalizeLead = (input = {}, options = {}) => {
+  const now = new Date().toISOString();
+  const name = trimText(input.name || input.client, 160);
+  const company = trimText(input.company || input.organization, 160);
+  const email = trimText(input.email, 254);
+  const phone = trimText(input.phone, 30);
+  const contact = trimText(input.contact || [email, phone].filter(Boolean).join(" / "), 320);
+  const client = trimText(input.client || name || company, 180);
+  const service = trimText(input.service || input["maintenance-type"] || input["feedback-type"] || "Website Inquiry", 160);
+  const packageName = trimText(input.packageName || input.package || input["budget-plan"], 160);
+  const budgetLabel = trimText(input.budgetLabel || input.budget || input["budget-plan"], 160);
+  const message = trimText(input.message || input["project-details"] || input.timeline, 5000);
+  const createdAt = options.preserveCreatedAt ? validDateString(input.createdAt) : "";
+
+  return {
+    id: trimText(input.id, 120) || crypto.randomUUID(),
+    client,
+    name,
+    company,
+    email,
+    phone,
+    contact,
+    service,
+    packageName,
+    budget: normalizeBudget(input.budget, budgetLabel),
+    budgetLabel,
+    message,
+    status: normalizeStatus(input.status),
+    source: trimText(input.source, 120) || leadSourceFromForm(input.formName || input["form-name"]),
+    createdAt: options.preserveCreatedAt ? createdAt : now,
+    updatedAt: now,
+  };
+};
 
 export async function onRequest(context) {
   const { request, env } = context;
@@ -158,7 +206,7 @@ export async function onRequest(context) {
       }
 
       const lead = normalizeLead(await request.json());
-      if (!lead.client || !lead.contact) {
+      if ((!lead.name && !lead.client) || (!lead.email && !lead.phone)) {
         return respond(400, { error: "Name and contact details are required." });
       }
 

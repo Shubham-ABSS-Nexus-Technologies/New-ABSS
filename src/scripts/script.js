@@ -223,26 +223,53 @@ maintenanceModal?.addEventListener("click", (event) => {
 
 const formToLead = (form) => {
   const formData = new FormData(form);
-  const formName = String(formData.get("form-name") || form.getAttribute("name") || "website-inquiry");
-  const budgetLabel = String(formData.get("budget") || formData.get("budget-plan") || "");
+  const textValue = (...names) => {
+    for (const name of names) {
+      const value = formData.get(name);
+      if (value) return String(value).trim();
+    }
+    return "";
+  };
+  const formName = textValue("form-name") || form.getAttribute("name") || "website-inquiry";
+  const name = textValue("name");
+  const company = textValue("company", "organization");
+  const email = textValue("email");
+  const phone = textValue("phone");
+  const packageName = textValue("package", "budget-plan");
+  const budgetLabel = textValue("budget", "budget-plan");
   const firstBudgetNumber = budgetLabel.match(/\d[\d,]*/)?.[0]?.replaceAll(",", "") || "0";
   const service =
-    formData.get("service") ||
-    formData.get("package") ||
-    formData.get("maintenance-type") ||
-    formData.get("feedback-type") ||
+    textValue("service") ||
+    packageName ||
+    textValue("maintenance-type") ||
+    textValue("feedback-type") ||
     formName.replaceAll("-", " ");
-  const contact = [formData.get("email"), formData.get("phone")].filter(Boolean).join(" / ");
-  const company = formData.get("company");
-  const name = formData.get("name");
+  const message = textValue("message", "project-details", "maintenance-details");
+  const timeline = textValue("timeline");
+  const sourceMap = {
+    contact: "Contact Form",
+    "package-request": "Pricing Form",
+    "website-maintenance": "Maintenance Form",
+    feedback: "Feedback Form",
+  };
+  const contact = [email, phone].filter(Boolean).join(" / ");
 
   return {
     id: `${formName}-${Date.now()}`,
-    client: company ? `${name || "Website Inquiry"} (${company})` : name || "Website Inquiry",
-    service,
-    budget: Number(firstBudgetNumber),
-    status: "New",
+    client: name || company || "Website Inquiry",
+    name,
+    company,
+    email,
+    phone,
     contact,
+    service,
+    packageName,
+    budget: Number(firstBudgetNumber),
+    budgetLabel,
+    message: [message, timeline ? `Timeline: ${timeline}` : ""].filter(Boolean).join("\n\n"),
+    status: "New",
+    source: sourceMap[formName] || "Contact Form",
+    formName,
   };
 };
 
@@ -319,6 +346,8 @@ if (adminApp) {
   const adminShell = document.querySelector("[data-admin-shell]");
   const adminModal = document.querySelector("[data-admin-modal]");
   const adminForm = document.querySelector("[data-admin-form]");
+  const leadDetailsModal = document.querySelector("[data-lead-details-modal]");
+  const leadDetails = document.querySelector("[data-lead-details]");
 
   const defaults = {
     leads: [],
@@ -387,12 +416,50 @@ if (adminApp) {
       .replaceAll("&", "&amp;")
       .replaceAll("<", "&lt;")
       .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;");
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
 
+  const leadStatuses = ["New", "Follow Up", "Call Booked", "Proposal Sent", "Converted", "Rejected"];
   const formatMoney = (value) => `Rs ${Number(value || 0).toLocaleString("en-IN")}`;
   const makeId = (prefix) => `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
   const emptyState = (message) => `<div class="admin-empty-state">${escapeHtml(message)}</div>`;
   const emptyRow = (message, columns) => `<tr><td colspan="${columns}"><div class="admin-empty-state">${escapeHtml(message)}</div></td></tr>`;
+  const textField = (value, fallback = "") => String(value || fallback).trim();
+  const parseContact = (contact = "") => {
+    const [email = "", phone = ""] = String(contact).split(" / ");
+    return { email: email.trim(), phone: phone.trim() };
+  };
+  const leadName = (lead) => textField(lead.name || lead.client, "Website Inquiry");
+  const leadEmail = (lead) => textField(lead.email || parseContact(lead.contact).email);
+  const leadPhone = (lead) => textField(lead.phone || parseContact(lead.contact).phone);
+  const leadBudgetLabel = (lead) => textField(lead.budgetLabel, lead.budget ? formatMoney(lead.budget) : "Not specified");
+  const leadMessage = (lead) => textField(lead.message, "No project message was provided.");
+  const leadCreatedAt = (lead) => textField(lead.createdAt);
+  const formatLeadDate = (value) => {
+    if (!value) return "Legacy lead";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "Legacy lead";
+    return date.toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
+  };
+  const leadSource = (lead) => textField(lead.source, "Contact Form");
+  const sortLeadsNewestFirst = (leads) =>
+    [...leads].sort((left, right) => {
+      const rightTime = Date.parse(right.createdAt || "") || 0;
+      const leftTime = Date.parse(left.createdAt || "") || 0;
+      return rightTime - leftTime;
+    });
+  const csvCell = (value) => `"${String(value ?? "").replaceAll('"', '""').replaceAll("\r", " ").replaceAll("\n", " ")}"`;
+  const getLeadById = (id) => adminState.leads.find((lead) => String(lead.id) === String(id));
+  const normalizedLeadStatus = (status) => (leadStatuses.includes(status) ? status : "New");
+  const updateLeadStatus = (id, status) => {
+    const lead = getLeadById(id);
+    const nextStatus = normalizedLeadStatus(status);
+    if (!lead) return;
+    lead.status = nextStatus;
+    lead.updatedAt = new Date().toISOString();
+    addActivity(`${leadName(lead)} lead moved to ${nextStatus}`);
+    renderAdmin();
+  };
 
   const statusClass = (status) => {
     if (["Converted", "Proposal Sent", "Done", "Closed"].includes(status)) return "completed";
@@ -429,14 +496,31 @@ if (adminApp) {
   });
 
   document.querySelector("[data-export-csv]")?.addEventListener("click", () => {
-    const rows = [["Type", "Client/Name", "Service/Issue", "Value", "Status"]];
-    adminState.leads.forEach((lead) => rows.push(["Lead", lead.client, lead.service, lead.budget, lead.status]));
-    adminState.projects.forEach((project) => rows.push(["Project", project.client, project.name, project.value, project.status]));
-    adminState.tickets.forEach((ticket) => rows.push(["Ticket", ticket.client, ticket.issue, ticket.priority, ticket.status]));
-    const csv = rows.map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(",")).join("\n");
+    const rows = [
+      ["ID", "Name", "Company", "Email", "Phone", "Service", "Package", "Budget Value", "Budget Label", "Message", "Status", "Source", "Created At", "Updated At"],
+    ];
+    sortLeadsNewestFirst(adminState.leads).forEach((lead) => {
+      rows.push([
+        lead.id,
+        leadName(lead),
+        lead.company,
+        leadEmail(lead),
+        leadPhone(lead),
+        lead.service,
+        lead.packageName,
+        Number(lead.budget || 0),
+        leadBudgetLabel(lead),
+        leadMessage(lead),
+        normalizedLeadStatus(lead.status),
+        leadSource(lead),
+        lead.createdAt || "",
+        lead.updatedAt || "",
+      ]);
+    });
+    const csv = rows.map((row) => row.map(csvCell).join(",")).join("\n");
     const link = document.createElement("a");
     link.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
-    link.download = "abss-admin-export.csv";
+    link.download = "abss-leads-export.csv";
     link.click();
     URL.revokeObjectURL(link.href);
   });
@@ -469,6 +553,16 @@ if (adminApp) {
   adminModal?.addEventListener("click", (event) => {
     if (event.target === adminModal) adminModal.close();
   });
+  document.querySelector("[data-close-lead-details]")?.addEventListener("click", () => leadDetailsModal?.close());
+  leadDetailsModal?.addEventListener("click", (event) => {
+    if (event.target === leadDetailsModal) leadDetailsModal.close();
+  });
+  leadDetailsModal?.addEventListener("change", (event) => {
+    const select = event.target.closest("[data-lead-status-select]");
+    if (!select) return;
+    updateLeadStatus(select.dataset.id, select.value);
+    openLeadDetails(select.dataset.id);
+  });
 
   adminApp.addEventListener("click", (event) => {
     const actionButton = event.target.closest("[data-admin-action]");
@@ -480,12 +574,16 @@ if (adminApp) {
       addActivity("Lead removed from queue");
     }
 
+    if (adminAction === "view-lead") {
+      openLeadDetails(id);
+      return;
+    }
+
     if (adminAction === "cycle-lead") {
-      const order = ["New", "Follow Up", "Call Booked", "Proposal Sent", "Converted", "Rejected"];
       const lead = adminState.leads.find((item) => item.id === id);
       if (lead) {
-        lead.status = order[(order.indexOf(lead.status) + 1) % order.length];
-        addActivity(`${lead.client} lead moved to ${lead.status}`);
+        const currentIndex = leadStatuses.indexOf(normalizedLeadStatus(lead.status));
+        updateLeadStatus(id, leadStatuses[(currentIndex + 1) % leadStatuses.length]);
       }
     }
 
@@ -545,13 +643,27 @@ if (adminApp) {
     const type = adminForm.dataset.entryType;
 
     if (type === "lead") {
+      const now = new Date().toISOString();
+      const email = textField(formData.get("email"));
+      const phone = textField(formData.get("phone"));
+      const budgetLabel = textField(formData.get("budgetLabel"), formData.get("budget"));
       adminState.leads.unshift({
         id: makeId("lead"),
         client: formData.get("client"),
+        name: formData.get("client"),
+        company: formData.get("company"),
+        email,
+        phone,
+        contact: [email, phone].filter(Boolean).join(" / "),
         service: formData.get("service"),
+        packageName: formData.get("packageName"),
         budget: Number(formData.get("budget") || 0),
-        status: formData.get("status"),
-        contact: formData.get("contact"),
+        budgetLabel,
+        message: formData.get("message"),
+        status: normalizedLeadStatus(formData.get("status")),
+        source: "Admin",
+        createdAt: now,
+        updatedAt: now,
       });
       addActivity(`${formData.get("client")} lead added`);
     }
@@ -608,10 +720,15 @@ if (adminApp) {
         <p class="eyebrow">Lead</p><h2>${titles.lead}</h2>
         <div class="admin-form-grid">
           <label>Client<input name="client" required /></label>
+          <label>Company<input name="company" /></label>
+          <label>Email<input name="email" type="email" /></label>
+          <label>Phone<input name="phone" /></label>
           <label>Service<input name="service" required /></label>
+          <label>Package<input name="packageName" /></label>
           <label>Budget<input name="budget" type="number" min="0" required /></label>
-          <label>Status<select name="status"><option>New</option><option>Follow Up</option><option>Call Booked</option><option>Proposal Sent</option></select></label>
-          <label class="full-field">Contact<input name="contact" required /></label>
+          <label>Budget Label<input name="budgetLabel" placeholder="₹5,000 - ₹10,000" /></label>
+          <label>Status<select name="status"><option>New</option><option>Follow Up</option><option>Call Booked</option><option>Proposal Sent</option><option>Converted</option><option>Rejected</option></select></label>
+          <label class="full-field">Message<textarea name="message" rows="4"></textarea></label>
           <button class="btn primary" type="submit">Save Lead</button>
         </div>`,
       project: `
@@ -665,13 +782,63 @@ if (adminApp) {
     }
   };
 
+  const openLeadDetails = (id) => {
+    const lead = getLeadById(id);
+    if (!leadDetails || !lead) return;
+    const email = leadEmail(lead);
+    const phone = leadPhone(lead);
+    const whatsappPhone = phone.replace(/[^\d]/g, "");
+    const status = normalizedLeadStatus(lead.status);
+
+    leadDetails.innerHTML = `
+      <div class="lead-details">
+        <p class="eyebrow">Lead Details</p>
+        <h2>${escapeHtml(leadName(lead))}</h2>
+        <div class="lead-detail-grid">
+          <article><span>Full Name</span><strong>${escapeHtml(leadName(lead))}</strong></article>
+          <article><span>Company/Organization</span><strong>${escapeHtml(textField(lead.company, "Not provided"))}</strong></article>
+          <article><span>Email</span><strong>${escapeHtml(email || "Not provided")}</strong></article>
+          <article><span>Phone</span><strong>${escapeHtml(phone || "Not provided")}</strong></article>
+          <article><span>Service</span><strong>${escapeHtml(textField(lead.service, "Website Inquiry"))}</strong></article>
+          <article><span>Package</span><strong>${escapeHtml(textField(lead.packageName, "Not selected"))}</strong></article>
+          <article><span>Budget Range</span><strong>${escapeHtml(leadBudgetLabel(lead))}</strong></article>
+          <article><span>Source</span><strong>${escapeHtml(leadSource(lead))}</strong></article>
+          <article><span>Submitted Date and Time</span><strong>${escapeHtml(formatLeadDate(lead.createdAt))}</strong></article>
+          <article>
+            <span>Current Status</span>
+            <select data-lead-status-select data-id="${escapeHtml(lead.id)}">
+              ${leadStatuses.map((item) => `<option value="${escapeHtml(item)}" ${item === status ? "selected" : ""}>${escapeHtml(item)}</option>`).join("")}
+            </select>
+          </article>
+          <article class="full-field"><span>Project Message</span><p>${escapeHtml(leadMessage(lead))}</p></article>
+        </div>
+        <div class="lead-action-row">
+          ${email ? `<a class="row-action" href="mailto:${escapeHtml(email)}">Email</a>` : ""}
+          ${phone ? `<a class="row-action" href="tel:${escapeHtml(phone)}">Phone</a>` : ""}
+          ${whatsappPhone ? `<a class="row-action" href="https://wa.me/${escapeHtml(whatsappPhone)}" target="_blank" rel="noopener noreferrer">WhatsApp</a>` : ""}
+        </div>
+      </div>`;
+    leadDetailsModal?.showModal();
+  };
+
   const renderLeads = () => {
     const table = document.querySelector("[data-leads-table]");
     if (!table) return;
-    const rows = adminState.leads.filter((lead) => {
-      const searchText = `${lead.client} ${lead.service} ${lead.contact}`.toLowerCase();
+    const rows = sortLeadsNewestFirst(adminState.leads).filter((lead) => {
+      const searchText = [
+        leadName(lead),
+        lead.company,
+        leadEmail(lead),
+        leadPhone(lead),
+        lead.service,
+        lead.packageName,
+        leadMessage(lead),
+        normalizedLeadStatus(lead.status),
+      ]
+        .join(" ")
+        .toLowerCase();
       const matchesSearch = searchText.includes(activeFilters.leadsSearch);
-      const matchesStatus = activeFilters.leadsStatus === "all" || lead.status === activeFilters.leadsStatus;
+      const matchesStatus = activeFilters.leadsStatus === "all" || normalizedLeadStatus(lead.status) === activeFilters.leadsStatus;
       return matchesSearch && matchesStatus;
     });
     if (!rows.length) {
@@ -682,14 +849,15 @@ if (adminApp) {
       .map(
         (lead) => `
           <tr>
-            <td>${escapeHtml(lead.client)}</td>
-            <td>${escapeHtml(lead.service)}</td>
-            <td>${formatMoney(lead.budget)}</td>
-            <td><span class="status-badge ${statusClass(lead.status)}">${escapeHtml(lead.status)}</span></td>
-            <td>${escapeHtml(lead.contact)}</td>
+            <td>${escapeHtml(leadName(lead))}</td>
+            <td>${escapeHtml(textField(lead.service, "Website Inquiry"))}</td>
+            <td>${escapeHtml(leadBudgetLabel(lead))}</td>
+            <td><span class="status-badge ${statusClass(normalizedLeadStatus(lead.status))}">${escapeHtml(normalizedLeadStatus(lead.status))}</span></td>
+            <td>${escapeHtml(formatLeadDate(lead.createdAt))}</td>
             <td>
-              <button type="button" class="row-action" data-admin-action="cycle-lead" data-id="${lead.id}">Status</button>
-              <button type="button" class="row-action danger" data-admin-action="delete-lead" data-id="${lead.id}">Delete</button>
+              <button type="button" class="row-action" data-admin-action="view-lead" data-id="${escapeHtml(lead.id)}">View Details</button>
+              <button type="button" class="row-action" data-admin-action="cycle-lead" data-id="${escapeHtml(lead.id)}">Status</button>
+              <button type="button" class="row-action danger" data-admin-action="delete-lead" data-id="${escapeHtml(lead.id)}">Delete</button>
             </td>
           </tr>`
       )
@@ -797,7 +965,8 @@ if (adminApp) {
     const demand = document.querySelector("[data-service-demand]");
     if (!demand) return;
     const counts = adminState.leads.reduce((items, lead) => {
-      items[lead.service] = (items[lead.service] || 0) + 1;
+      const service = textField(lead.service, "Website Inquiry");
+      items[service] = (items[service] || 0) + 1;
       return items;
     }, {});
     const total = Math.max(adminState.leads.length, 1);
@@ -861,7 +1030,8 @@ if (adminApp) {
     const context = canvas.getContext("2d");
     if (!context) return;
     const counts = adminState.leads.reduce((items, lead) => {
-      items[lead.service] = (items[lead.service] || 0) + 1;
+      const service = textField(lead.service, "Website Inquiry");
+      items[service] = (items[service] || 0) + 1;
       return items;
     }, {});
     const entries = Object.entries(counts).slice(0, 4);
