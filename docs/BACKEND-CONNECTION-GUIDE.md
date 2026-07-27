@@ -33,6 +33,7 @@ Deploy this repository with Cloudflare Pages:
 Build command: npm run build
 Build output directory: dist
 Functions directory: functions
+Deploy command: leave blank
 ```
 
 Create one KV namespace in Cloudflare:

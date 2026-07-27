@@ -3,10 +3,7 @@ const path = require("path");
 
 const rootDir = path.resolve(__dirname, "..");
 const distDir = path.join(rootDir, "dist");
-const includeAdmin =
-  process.env.ABSS_ALLOW_DEV_ADMIN === "true" ||
-  process.env.CF_PAGES === "1" ||
-  Boolean(process.env.ADMIN_USERNAME && process.env.ADMIN_PASSWORD && process.env.AUTH_SECRET);
+const includeAdmin = process.env.ABSS_EXCLUDE_ADMIN !== "true";
 const excludedPublicDirs = new Set([path.join("src", "templates")]);
 
 const copyRecursive = (source, destination) => {
@@ -49,4 +46,4 @@ copyTextFile("sitemap.xml");
 copyTextFile("_headers", (content) => (includeAdmin ? content : content.replace(/^\/(?:src\/)?admin[^\n]*(?:\n  .*)*\n?/gm, "")));
 copyTextFile("_redirects", (content) => (includeAdmin ? content : content.replace(/^\/(?:src\/)?admin[^\n]*\n/gm, "")));
 
-console.log(`Build complete. Admin pages ${includeAdmin ? "included" : "excluded"} from dist.`);
+console.log(`Build complete. Admin pages ${includeAdmin ? "included" : "excluded"} in dist.`);
