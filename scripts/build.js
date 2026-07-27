@@ -41,18 +41,32 @@ for (const entry of ["src", "public"]) {
   copyRecursive(path.join(rootDir, entry), path.join(distDir, entry));
 }
 
-const homepageSource = path.join(rootDir, "src", "pages", "index.html");
-const homepageDestination = path.join(distDir, "index.html");
+const publicPages = [
+  ["src/pages/index.html", "index.html"],
+  ["src/pages/about.html", "about.html"],
+  ["src/pages/services.html", "services.html"],
+  ["src/pages/projects.html", "projects.html"],
+  ["src/pages/contact.html", "contact.html"],
+  ["src/pages/privacy-policy.html", "privacy-policy.html"],
+  ["src/pages/terms-conditions.html", "terms-and-conditions.html"],
+  ["src/pages/disclaimer.html", "disclaimer.html"],
+  ["src/pages/refund-policy.html", "refund-policy.html"],
+  ["src/pages/support-policy.html", "support-policy.html"],
+  ["src/pages/sitemap.html", "sitemap.html"],
+  ["src/pages/service-website-development.html", path.join("services", "website-development.html")],
+  ["src/pages/404.html", "404.html"],
+];
 
-if (!fs.existsSync(homepageSource)) {
-  throw new Error("Homepage source file is missing: src/pages/index.html");
-}
+for (const [sourceRelative, destinationRelative] of publicPages) {
+  const source = path.join(rootDir, sourceRelative);
+  const destination = path.join(distDir, destinationRelative);
 
-fs.copyFileSync(homepageSource, homepageDestination);
+  if (!fs.existsSync(source)) {
+    throw new Error(`Required public page missing: ${sourceRelative}`);
+  }
 
-const notFoundSource = path.join(rootDir, "src", "pages", "404.html");
-if (fs.existsSync(notFoundSource)) {
-  fs.copyFileSync(notFoundSource, path.join(distDir, "404.html"));
+  fs.mkdirSync(path.dirname(destination), { recursive: true });
+  fs.copyFileSync(source, destination);
 }
 
 copyTextFile("robots.txt");
@@ -60,8 +74,22 @@ copyTextFile("sitemap.xml");
 copyTextFile("_headers", (content) => (includeAdmin ? content : content.replace(/^\/(?:src\/)?admin[^\n]*(?:\n  .*)*\n?/gm, "")));
 copyTextFile("_redirects", (content) => (includeAdmin ? content : content.replace(/^\/(?:src\/)?admin[^\n]*\n/gm, "")));
 
-if (!fs.existsSync(path.join(distDir, "index.html"))) {
-  throw new Error("Cloudflare build failed: dist/index.html was not created.");
+const requiredBuildFiles = [
+  "index.html",
+  "about.html",
+  "services.html",
+  "projects.html",
+  "contact.html",
+  "404.html",
+  path.join("services", "website-development.html"),
+  "_redirects",
+  "_headers",
+];
+
+for (const requiredFile of requiredBuildFiles) {
+  if (!fs.existsSync(path.join(distDir, requiredFile))) {
+    throw new Error(`Cloudflare build failed: dist/${requiredFile} was not created.`);
+  }
 }
 
 console.log(`Build complete. Admin pages ${includeAdmin ? "included" : "excluded"} in dist.`);

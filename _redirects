@@ -65,19 +65,6 @@
 /support-policy/ /support-policy 301
 /sitemap/ /sitemap 301
 
-/ /src/pages/index.html 200
-/about /src/pages/about.html 200
-/services /src/pages/services.html 200
-/services/website-development /src/pages/service-website-development.html 200
-/projects /src/pages/projects.html 200
-/contact /src/pages/contact.html 200
-/privacy-policy /src/pages/privacy-policy.html 200
-/terms-and-conditions /src/pages/terms-conditions.html 200
-/disclaimer /src/pages/disclaimer.html 200
-/refund-policy /src/pages/refund-policy.html 200
-/support-policy /src/pages/support-policy.html 200
-/sitemap /src/pages/sitemap.html 200
-
 /admin-login.html /src/admin/admin-login.html 301
 /admin-dashboard.html /src/admin/admin-dashboard.html 301
 /admin-leads.html /src/admin/admin-leads.html 301
@@ -92,5 +79,3 @@
 /src/admin/admin-clients /src/admin/admin-clients.html 200
 /src/admin/admin-support /src/admin/admin-support.html 200
 /src/admin/admin-pricing /src/admin/admin-pricing.html 200
-
-/* /src/pages/404.html 404
