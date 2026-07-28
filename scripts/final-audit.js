@@ -50,6 +50,10 @@ const read = (filePath) => fs.readFileSync(filePath, "utf8");
 const existsInDist = (relativePath) => fs.existsSync(path.join(distDir, relativePath));
 const countMatches = (text, pattern) => (text.match(pattern) || []).length;
 const attrs = (tag) => Object.fromEntries([...tag.matchAll(/([\w:-]+)\s*=\s*"([^"]*)"/g)].map((match) => [match[1], match[2]]));
+const getMetaContent = (html, attributeName, attributeValue) => {
+  const tag = html.match(new RegExp(`<meta\\b(?=[^>]*\\b${attributeName}="${attributeValue}")[^>]*>`, "i"))?.[0];
+  return tag ? attrs(tag).content || "" : "";
+};
 
 requiredFiles.forEach((file) => {
   if (!existsInDist(file)) fail(`Missing required dist file: ${file}`);
@@ -62,6 +66,8 @@ adminFiles.forEach((file) => {
   if (!buildIncludesAdmin && exists) fail(`Admin file exposed while ABSS_EXCLUDE_ADMIN=true: ${file}`);
 });
 
+const metaDescriptions = new Map();
+
 for (const [relativePath, expectedCanonical] of publicPages) {
   const filePath = path.join(distDir, relativePath);
   if (!fs.existsSync(filePath)) {
@@ -73,8 +79,21 @@ for (const [relativePath, expectedCanonical] of publicPages) {
   const ids = new Set([...html.matchAll(/\sid\s*=\s*"([^"]+)"/g)].map((match) => match[1]));
   const links = [...html.matchAll(/<(a|link|script|img|source)\b[^>]*(?:href|src)\s*=\s*"([^"]*)"/g)];
 
+  const metaDescription = getMetaContent(html, "name", "description").trim();
+
   if (!/<title>[^<]+<\/title>/i.test(html)) fail(`${relativePath}: missing title`);
-  if (!/<meta\s+name="description"\s+content="[^"]+"/i.test(html)) fail(`${relativePath}: missing meta description`);
+  if (!metaDescription) {
+    fail(`${relativePath}: missing meta description`);
+  } else {
+    if (metaDescription.length < 100) fail(`${relativePath}: meta description below 100 characters`);
+    if (metaDescription.length > 170) fail(`${relativePath}: meta description above 170 characters`);
+    const duplicatePage = metaDescriptions.get(metaDescription);
+    if (duplicatePage) {
+      fail(`${relativePath}: duplicate meta description also used by ${duplicatePage}`);
+    } else {
+      metaDescriptions.set(metaDescription, relativePath);
+    }
+  }
   if (countMatches(html, /<link\s+rel="canonical"\s+href="[^"]+"/gi) !== 1) fail(`${relativePath}: expected exactly one canonical`);
   if (!html.includes(`<link rel="canonical" href="${expectedCanonical}"`)) fail(`${relativePath}: incorrect canonical`);
   if (!html.includes(`<meta property="og:url" content="${expectedCanonical}"`)) fail(`${relativePath}: incorrect og:url`);
