@@ -8,5 +8,6 @@ node --check 'functions/api/[[path]].js'
 
 bash scripts/check-links.sh
 node scripts/check-css-braces.js
+node scripts/final-audit.js
 
 echo "Validation passed."

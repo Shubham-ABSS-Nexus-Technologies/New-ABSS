@@ -86,6 +86,13 @@ if (navToggle && navLinks) {
       navToggle.setAttribute("aria-expanded", "false");
     });
   });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape" || !navLinks.classList.contains("open")) return;
+    navLinks.classList.remove("open");
+    navToggle.setAttribute("aria-expanded", "false");
+    navToggle.focus();
+  });
 }
 
 const faqToggles = document.querySelectorAll("[data-faq-toggle]");
