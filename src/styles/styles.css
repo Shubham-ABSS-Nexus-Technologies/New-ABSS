@@ -868,6 +868,67 @@ h3 {
   color: var(--navy);
 }
 
+.required-mark,
+.field-help,
+.field-error,
+.form-error-summary {
+  display: block;
+}
+
+.required-mark {
+  margin-top: 4px;
+  color: var(--gray);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.field-help {
+  margin-top: 7px;
+  color: var(--gray);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.field-error {
+  min-height: 18px;
+  margin-top: 7px;
+  color: #b42318;
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.form-error-summary {
+  grid-column: 1 / -1;
+  padding: 13px 14px;
+  color: #842029;
+  border: 1px solid rgba(180, 35, 24, 0.22);
+  border-radius: 8px;
+  background: #fff2f0;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.contact-form [aria-invalid="true"] {
+  border-color: #b42318;
+  box-shadow: 0 0 0 4px rgba(180, 35, 24, 0.08);
+}
+
+.honeypot-field {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.form-result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  grid-column: 1 / -1;
+}
+
 .process-grid article {
   min-height: 150px;
   padding: 22px;

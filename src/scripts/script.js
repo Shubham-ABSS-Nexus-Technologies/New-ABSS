@@ -39,11 +39,11 @@ if (isLocalStaticServer) {
 }
 
 const serviceSelect = document.querySelector('select[name="service"]');
-const packageSelect = document.querySelector("#packageSelect");
+const packageSelect = document.querySelector("#packageSelect, select[name='package']");
 const queryParams = new URLSearchParams(window.location.search);
 
 if (serviceSelect) {
-  const selectedService = queryParams.get("service");
+  const selectedService = queryParams.get("service")?.trim();
   if (selectedService) {
     const serviceAliases = {
       "Landing Page": "Business Landing Page",
@@ -57,9 +57,12 @@ if (serviceSelect) {
 }
 
 if (packageSelect) {
-  const selectedPackage = queryParams.get("package") || queryParams.get("service");
+  const selectedPackage = queryParams.get("plan") || queryParams.get("package") || queryParams.get("service");
   if (selectedPackage) {
     const packageAliases = {
+      "Starter Website": "Starter Website",
+      "Business Website": "Business Website",
+      "Custom Website": "Custom Website",
       "Premium Package": "Premium / Custom Package",
       "Website Maintenance": "Maintenance Package",
     };
@@ -103,6 +106,101 @@ faqToggles.forEach((button) => {
     button.setAttribute("aria-expanded", String(willOpen));
     if (answer) answer.hidden = !willOpen;
   });
+});
+
+const inquiryForm = document.querySelector("[data-inquiry-form]");
+const inquiryMessage = inquiryForm?.querySelector('textarea[name="message"]');
+const characterCount = inquiryForm?.querySelector("[data-character-count]");
+
+const trimField = (form, name) => {
+  const field = form.elements[name];
+  if (!field || typeof field.value !== "string") return "";
+  field.value = field.value.trim();
+  return field.value;
+};
+
+const clearInquiryErrors = (form) => {
+  form.querySelectorAll("[data-field-error]").forEach((item) => {
+    item.textContent = "";
+  });
+  form.querySelectorAll("[aria-invalid='true']").forEach((field) => {
+    field.removeAttribute("aria-invalid");
+  });
+  const summary = form.querySelector("[data-error-summary]");
+  if (summary) {
+    summary.hidden = true;
+    summary.textContent = "";
+  }
+};
+
+const setInquiryError = (form, name, message) => {
+  const field = form.elements[name];
+  const error = form.querySelector(`[data-field-error="${CSS.escape(name)}"]`);
+  if (field) field.setAttribute("aria-invalid", "true");
+  if (error) error.textContent = message;
+};
+
+const isPracticalEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+const isPracticalPhone = (value) => {
+  const digits = value.replace(/\D/g, "");
+  return digits.length >= 10 && digits.length <= 15 && /^[+\d\s().-]+$/.test(value);
+};
+
+const isSafeHttpUrl = (value) => {
+  if (!value) return true;
+  try {
+    const url = new URL(value);
+    return ["http:", "https:"].includes(url.protocol);
+  } catch (error) {
+    return false;
+  }
+};
+
+const validateInquiryForm = (form) => {
+  clearInquiryErrors(form);
+  const errors = [];
+  const allowedServices = new Set([...form.elements.service.options].map((option) => option.value).filter(Boolean));
+  const allowedBudgets = new Set([...form.elements.budget.options].map((option) => option.value).filter(Boolean));
+  const allowedTimelines = new Set([...form.elements.timeline.options].map((option) => option.value).filter(Boolean));
+
+  const name = trimField(form, "name");
+  const email = trimField(form, "email");
+  const phone = trimField(form, "phone");
+  trimField(form, "company");
+  const websiteUrl = trimField(form, "website-url");
+  const message = trimField(form, "message");
+  const service = form.elements.service.value;
+  const budget = form.elements.budget.value;
+  const timeline = form.elements.timeline.value;
+  const consent = form.elements.consent.checked;
+
+  if (name.length < 2 || name.length > 80) errors.push(["name", "Please enter your full name."]);
+  if (!isPracticalEmail(email) || email.length > 254) errors.push(["email", "Please enter a valid email address."]);
+  if (!isPracticalPhone(phone)) errors.push(["phone", "Please enter a valid phone number."]);
+  if (websiteUrl.length > 500 || !isSafeHttpUrl(websiteUrl)) errors.push(["website-url", "Please enter a valid HTTP or HTTPS website URL."]);
+  if (!allowedServices.has(service)) errors.push(["service", "Please select a service."]);
+  if (budget && !allowedBudgets.has(budget)) errors.push(["budget", "Please select a valid budget option."]);
+  if (timeline && !allowedTimelines.has(timeline)) errors.push(["timeline", "Please select a valid timeline option."]);
+  if (message.length < 20 || message.length > 3000) errors.push(["message", "Please provide at least 20 characters about your project."]);
+  if (!consent) errors.push(["consent", "Please confirm that we may use your information to respond."]);
+
+  errors.forEach(([field, messageText]) => setInquiryError(form, field, messageText));
+
+  if (errors.length) {
+    const summary = form.querySelector("[data-error-summary]");
+    if (summary) {
+      summary.textContent = "Please review the highlighted fields and try again.";
+      summary.hidden = false;
+    }
+    form.elements[errors[0][0]]?.focus();
+    return false;
+  }
+
+  return true;
+};
+
+inquiryMessage?.addEventListener("input", () => {
+  if (characterCount) characterCount.textContent = String(inquiryMessage.value.length);
 });
 
 const projectFilterButtons = document.querySelectorAll("[data-project-filter]");
@@ -276,6 +374,7 @@ const formToLead = (form) => {
   const phone = textValue("phone");
   const packageName = textValue("package", "budget-plan");
   const budgetLabel = textValue("budget", "budget-plan");
+  const websiteUrl = textValue("website-url");
   const firstBudgetNumber = budgetLabel.match(/\d[\d,]*/)?.[0]?.replaceAll(",", "") || "0";
   const service =
     textValue("service") ||
@@ -285,6 +384,7 @@ const formToLead = (form) => {
     formName.replaceAll("-", " ");
   const message = textValue("message", "project-details", "maintenance-details");
   const timeline = textValue("timeline");
+  const consent = textValue("consent");
   const sourceMap = {
     contact: "Contact Form",
     "package-request": "Pricing Form",
@@ -305,11 +405,18 @@ const formToLead = (form) => {
     packageName,
     budget: Number(firstBudgetNumber),
     budgetLabel,
-    message: [message, timeline ? `Timeline: ${timeline}` : ""].filter(Boolean).join("\n\n"),
+    websiteUrl,
+    message: [
+      websiteUrl ? `Website URL: ${websiteUrl}` : "",
+      message,
+      timeline ? `Timeline: ${timeline}` : "",
+      consent ? `Consent: ${consent}` : "",
+    ].filter(Boolean).join("\n\n"),
     timeline,
     status: "New",
     source: sourceMap[formName] || "Contact Form",
     formName,
+    consent,
   };
 };
 
@@ -330,22 +437,42 @@ document.querySelectorAll("form.contact-form").forEach((form) => {
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
 
+    if (form.matches("[data-inquiry-form]")) {
+      form.querySelector("[data-success-actions]")?.setAttribute("hidden", "");
+      if (form.elements.website?.value) {
+        form.reset();
+        setFormStatus(form, "success", "Thank you for contacting ABSS Nexus Technologies. Your project details have been received and will be reviewed.");
+        return;
+      }
+
+      if (!validateInquiryForm(form)) return;
+    }
+
     const submitButton = form.querySelector("[type='submit']");
     const originalButtonText = submitButton?.textContent || "";
     if (submitButton) {
       submitButton.disabled = true;
-      submitButton.textContent = "Submitting...";
+      submitButton.setAttribute("aria-busy", "true");
+      submitButton.textContent = "Submitting…";
     }
 
     try {
       await window.AbssAdminApi?.queueContactLead(formToLead(form));
       form.reset();
-      setFormStatus(form, "success", "Thank you. Your request has been received and ABSS Nexus Technologies will contact you soon.");
+      if (characterCount && form.matches("[data-inquiry-form]")) characterCount.textContent = "0";
+      setFormStatus(form, "success", form.matches("[data-inquiry-form]")
+        ? "Your Inquiry Has Been Submitted. Thank you for contacting ABSS Nexus Technologies. Your project details have been received and will be reviewed."
+        : "Thank you. Your request has been received and ABSS Nexus Technologies will contact you soon.");
+      form.querySelector("[data-success-actions]")?.removeAttribute("hidden");
     } catch (error) {
-      setFormStatus(form, "error", "Something went wrong. Please try again or contact us on WhatsApp.");
+      console.error("Contact submission failed");
+      setFormStatus(form, "error", form.matches("[data-inquiry-form]")
+        ? "Your Inquiry Could Not Be Submitted. Please check your connection and try again. You may also contact us by email or WhatsApp."
+        : "Something went wrong. Please try again or contact us on WhatsApp.");
     } finally {
       if (submitButton) {
         submitButton.disabled = false;
+        submitButton.removeAttribute("aria-busy");
         submitButton.textContent = originalButtonText;
       }
     }

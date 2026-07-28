@@ -162,6 +162,82 @@ const leadSourceFromForm = (value) => {
   if (source.includes("feedback")) return "Feedback Form";
   return "Contact Form";
 };
+const contactServiceValues = new Set([
+  "Website Development",
+  "UI/UX Design",
+  "Website Maintenance",
+  "Business Website",
+  "Portfolio Website",
+  "Landing Page Development",
+  "School / Institute Website",
+  "E-commerce Website",
+  "Application Development",
+  "Business Landing Page",
+  "Custom Requirement",
+  "Other",
+]);
+const contactBudgetValues = new Set([
+  "",
+  "Not decided yet",
+  "Below ₹5,000",
+  "₹5,000 - ₹10,000",
+  "₹10,000 - ₹25,000",
+  "₹25,000 - ₹50,000",
+  "Above ₹50,000",
+  "Need a custom quotation",
+]);
+const contactTimelineValues = new Set([
+  "",
+  "Flexible",
+  "Within 1 week",
+  "Within 2-4 weeks",
+  "Within 1-2 months",
+  "Specific deadline",
+  "Need guidance",
+]);
+const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+const isValidPhone = (value) => {
+  const digits = value.replace(/\D/g, "");
+  return digits.length >= 10 && digits.length <= 15 && /^[+\d\s().-]+$/.test(value);
+};
+const validateContactLeadInput = (input = {}) => {
+  if (trimText(input.website, 500)) return { ok: false, status: 200, body: { success: true, message: "Inquiry submitted successfully." } };
+  const formName = trimText(input.formName || input["form-name"], 80);
+  if (formName !== "contact") return { ok: true };
+
+  const name = trimText(input.name || input.client, 80);
+  const email = trimText(input.email, 254);
+  const phone = trimText(input.phone, 24);
+  const company = trimText(input.company, 120);
+  const service = trimText(input.service, 160);
+  const budget = trimText(input.budgetLabel || input.budget, 160);
+  const timeline = trimText(input.timeline, 160);
+  const message = trimText(input.message, 5000);
+  const consent = trimText(input.consent, 80);
+  const websiteUrl = trimText(input.websiteUrl || input["website-url"], 500);
+
+  if (name.length < 2 || !isValidEmail(email) || !isValidPhone(phone)) {
+    return { ok: false, status: 400, body: { success: false, message: "Please review the submitted information." } };
+  }
+  if (company.length > 120 || !contactServiceValues.has(service) || !contactBudgetValues.has(budget) || !contactTimelineValues.has(timeline)) {
+    return { ok: false, status: 400, body: { success: false, message: "Please review the submitted information." } };
+  }
+  if (message.length < 20 || message.length > 5000 || consent !== "Agreed") {
+    return { ok: false, status: 400, body: { success: false, message: "Please review the submitted information." } };
+  }
+  if (websiteUrl) {
+    try {
+      const url = new URL(websiteUrl);
+      if (!["http:", "https:"].includes(url.protocol)) {
+        return { ok: false, status: 400, body: { success: false, message: "Please review the submitted information." } };
+      }
+    } catch (error) {
+      return { ok: false, status: 400, body: { success: false, message: "Please review the submitted information." } };
+    }
+  }
+
+  return { ok: true };
+};
 const normalizeLead = (input = {}, options = {}) => {
   const now = new Date().toISOString();
   const name = trimText(input.name || input.client, 160);
@@ -369,15 +445,21 @@ export async function onRequest(context) {
     }
 
     if (request.method === "POST" && route === "/api/leads/contact") {
+      if (!String(request.headers.get("Content-Type") || "").toLowerCase().includes("application/json")) {
+        return respond(415, { success: false, message: "Please review the submitted information." });
+      }
+
       if (hasD1(env)) {
         try {
           await initializeDatabase(env.ABSS_DB);
           const input = await request.json();
+          const validation = validateContactLeadInput(input);
+          if (!validation.ok) return respond(validation.status, validation.body);
           if (!String(input.name || input.client || "").trim() || (!String(input.email || "").trim() && !String(input.phone || "").trim())) {
             return respond(400, { error: "Name and contact details are required." });
           }
           const lead = await createD1Lead(env.ABSS_DB, input);
-          return respond(201, { ok: true, lead });
+          return respond(201, { success: true, message: "Inquiry submitted successfully.", ok: true, lead });
         } catch (error) {
           safeLogError("D1 contact lead create failed", error);
           return respond(500, { error: "Database error" });
@@ -388,7 +470,10 @@ export async function onRequest(context) {
         return respond(503, { error: "Cloudflare storage is not configured." });
       }
 
-      const lead = normalizeLead(await request.json());
+      const input = await request.json();
+      const validation = validateContactLeadInput(input);
+      if (!validation.ok) return respond(validation.status, validation.body);
+      const lead = normalizeLead(input);
       if ((!lead.name && !lead.client) || (!lead.email && !lead.phone)) {
         return respond(400, { error: "Name and contact details are required." });
       }
@@ -397,7 +482,7 @@ export async function onRequest(context) {
       state.leads = [lead, ...(state.leads || [])].slice(0, 500);
       state.activity = [`${lead.client} submitted website inquiry`, ...(state.activity || [])].slice(0, 50);
       await writeState(env, state);
-      return respond(201, { ok: true, lead });
+      return respond(201, { success: true, message: "Inquiry submitted successfully.", ok: true, lead });
     }
 
     return respond(404, { error: "Not found" });
