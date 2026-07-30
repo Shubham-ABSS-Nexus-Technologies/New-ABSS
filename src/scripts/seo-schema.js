@@ -15,10 +15,10 @@
       name: "Shubham Kumar",
     },
     sameAs: [
-      "https://www.linkedin.com/in/shubham-abss-nexus-technologies/",
-      "https://github.com/Shubham-ABSS-Nexus-Technologies",
-      "https://www.instagram.com/shubham._tech/",
-      "https://x.com/SubhamKuma43099",
+      "PASTE_LINKEDIN_COMPANY_PAGE_URL_HERE",
+      "https://www.instagram.com/abssnexus/",
+      "https://www.facebook.com/profile.php?id=61592563923350",
+      "https://x.com/abssnexus",
     ],
     areaServed: "India",
     serviceType: [
