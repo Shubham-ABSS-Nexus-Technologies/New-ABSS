@@ -84,6 +84,9 @@ https://www.abssnexus.in/* https://abssnexus.in/:splat 301
 /support-policy/ /support-policy 301
 /sitemap/ /sitemap 301
 
+/admin /src/admin/admin-login 301
+/admin/ /src/admin/admin-login 301
+
 /admin-login /src/admin/admin-login 301
 /admin-login.html /src/admin/admin-login 301
 

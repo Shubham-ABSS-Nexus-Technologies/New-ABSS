@@ -95,6 +95,22 @@ const publicRedirects = {
   "/refund-policy/": "/refund-policy",
   "/support-policy/": "/support-policy",
   "/sitemap/": "/sitemap",
+  "/admin": "/src/admin/admin-login",
+  "/admin/": "/src/admin/admin-login",
+  "/admin-login": "/src/admin/admin-login",
+  "/admin-login/": "/src/admin/admin-login",
+  "/admin-dashboard": "/src/admin/admin-dashboard",
+  "/admin-dashboard/": "/src/admin/admin-dashboard",
+  "/admin-leads": "/src/admin/admin-leads",
+  "/admin-leads/": "/src/admin/admin-leads",
+  "/admin-projects": "/src/admin/admin-projects",
+  "/admin-projects/": "/src/admin/admin-projects",
+  "/admin-clients": "/src/admin/admin-clients",
+  "/admin-clients/": "/src/admin/admin-clients",
+  "/admin-support": "/src/admin/admin-support",
+  "/admin-support/": "/src/admin/admin-support",
+  "/admin-pricing": "/src/admin/admin-pricing",
+  "/admin-pricing/": "/src/admin/admin-pricing",
 };
 
 const rewrites = {
