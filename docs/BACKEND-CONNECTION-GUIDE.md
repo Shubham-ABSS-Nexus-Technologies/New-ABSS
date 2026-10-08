@@ -36,25 +36,53 @@ Functions directory: functions
 Deploy command: leave blank
 ```
 
-Create one KV namespace in Cloudflare:
+### 1. D1 Database Binding (Primary Database)
 
-```text
-ABSS Nexus Admin
+In Cloudflare Dashboard -> **Compute (Workers & Pages)** -> **Pages** -> Your Project (`new-abss`) -> **Settings** -> **Functions** -> **D1 database bindings**:
+
+- Click **Add binding**
+- **Variable name**: `ABSS_DB`
+- **D1 database**: `abss-website-db` (ID: `dd88bed8-1506-4274-b932-16cd2608c8ec`)
+
+To run migrations from your terminal:
+```bash
+npx wrangler d1 migrations apply abss-website-db --remote --config wrangler.d1.jsonc
 ```
 
-Bind that KV namespace to the Pages project with this variable name:
+### 2. KV Namespace Binding (Fallback Storage)
 
-```text
-ABSS_ADMIN
-```
+In **Settings** -> **Functions** -> **KV namespace bindings**:
 
-Add these Pages environment variables:
+- Click **Add binding**
+- **Variable name**: `ABSS_ADMIN`
+- **KV namespace**: `ABSS Nexus Admin`
 
-```text
-ADMIN_USERNAME=your-admin-username
-ADMIN_PASSWORD=your-strong-password
-AUTH_SECRET=generate-a-long-random-secret
-```
+### 3. Environment Variables
+
+In **Settings** -> **Environment variables** (Add under both **Production** and **Preview**):
+
+| Variable Name | Description | Example / Instructions |
+|---|---|---|
+| `ADMIN_USERNAME` | Admin panel login username | `admin` |
+| `ADMIN_PASSWORD` | Strong password for admin panel | *Generate a strong password* |
+| `AUTH_SECRET` | 64-char random string for session tokens | Run: `openssl rand -hex 32` |
+| `TURNSTILE_SECRET_KEY` | *(Optional)* Cloudflare Turnstile secret key | Found in Cloudflare Turnstile dashboard |
+
+> 💡 See [.env.example](file:///Users/shubhamkumar/New-ABSS-Deploy/.env.example) for a local reference file.
+
+### 4. Cloudflare Turnstile Bot Protection (Optional)
+
+1. Go to Cloudflare Dashboard -> **Turnstile** -> **Add Site**.
+2. Domain: `abssnexus.in` (add `localhost` for local testing).
+3. Widget mode: **Managed** (or **Non-interactive**).
+4. Copy the **Site Key** and add it to the contact form script/html:
+   ```html
+   <div class="cf-turnstile" data-sitekey="YOUR_TURNSTILE_SITE_KEY"></div>
+   ```
+5. Add the **Secret Key** in Cloudflare Pages Environment Variables as `TURNSTILE_SECRET_KEY`.
+6. Submissions will automatically be validated on the backend before creating leads.
+
+---
 
 The Cloudflare API lives here:
 
@@ -68,12 +96,14 @@ Production API routes:
 - `GET /api/admin/state`
 - `PUT /api/admin/state`
 - `POST /api/leads/contact`
-
-Admin and contact form data is stored in the `ABSS_ADMIN` KV namespace under `admin-state.json`.
+- `GET /api/d1/leads`
+- `DELETE /api/d1/leads/:id`
+- `GET /api/d1/users`
+- `DELETE /api/d1/users/:id`
 
 ## Test After Deploy
 
 1. Open `/admin-login.html`.
 2. Log in with the Cloudflare environment credentials.
-3. Submit the public contact form.
+3. Submit the public contact form on `/contact` or the home page.
 4. Confirm the new lead appears in the admin dashboard.

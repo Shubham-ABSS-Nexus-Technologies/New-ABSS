@@ -49,7 +49,7 @@ while IFS= read -r file; do
       echo "$file -> missing $ref"
       exit 1
     fi
-  done < <(rg -o '(href|src)="[^"]+"' "$file" | sed 's/^[^=]*="//;s/"$//')
+  done < <(if command -v rg >/dev/null 2>&1; then rg -o '(href|src)="[^"]+"' "$file"; else grep -oE '(href|src)="[^"]+"' "$file" || true; fi | sed 's/^[^=]*="//;s/"$//')
 done < <(find . -path './node_modules' -prune -o -name '*.html' -type f -print)
 
 if [ -f "_redirects" ]; then

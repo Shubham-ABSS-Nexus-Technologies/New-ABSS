@@ -74,6 +74,9 @@ for (const [sourceRelative, destinationRelative] of publicPages) {
 
 copyTextFile("robots.txt");
 copyTextFile("sitemap.xml");
+if (fs.existsSync(path.join(rootDir, "favicon.ico"))) {
+  fs.copyFileSync(path.join(rootDir, "favicon.ico"), path.join(distDir, "favicon.ico"));
+}
 copyTextFile("_headers", (content) => (includeAdmin ? content : content.replace(/^\/(?:src\/)?admin[^\n]*(?:\n  .*)*\n?/gm, "")));
 copyTextFile("_redirects", (content) => (includeAdmin ? content : content.replace(/^\/(?:src\/)?admin[^\n]*\n/gm, "")));
 

@@ -7,12 +7,16 @@
       name="description"
       content="Explore ABSS Nexus Technologies services for website development, UI/UX design, maintenance and digital project support for growing businesses."
     />
+    <meta property="og:type" content="website" />
     <meta property="og:title" content="ABSS Nexus Technologies" />
     <meta property="og:description" content="Explore ABSS Nexus Technologies services for website development, UI/UX design, maintenance and digital project support for growing businesses." />
     <meta property="og:image" content="https://abssnexus.in/public/assets/images/LogoGenerated.png" />
     <meta property="og:url" content="https://abssnexus.in/services" />
     <link rel="canonical" href="https://abssnexus.in/services" />
     <title>Services | ABSS Nexus Technologies</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/public/assets/images/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/public/assets/images/favicon.png" />
+    <link rel="apple-touch-icon" href="/public/assets/images/apple-touch-icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -329,7 +333,7 @@
                 <li>Developer handoff</li>
               </ul>
               <p class="package-time">Delivery: Depends on screen count and scope</p>
-              <a class="card-link" href="/contact?service=UI%2FUX%20Design">Get a Design Quote</a>
+              <button class="package-action" type="button" data-package-form data-package="UI/UX Design Package">Get a Design Quote</button>
             </article>
             <article>
               <span>Custom Quote</span>
@@ -521,6 +525,7 @@
             <option value="Starter Package">Starter Package</option>
             <option value="Business Package">Business Package</option>
             <option value="Professional Package">Professional Package</option>
+            <option value="UI/UX Design Package">UI/UX Design Package</option>
             <option value="Premium / Custom Package">Premium / Custom Package</option>
             <option value="Website Maintenance">Website Maintenance</option>
           </select>
@@ -559,7 +564,6 @@
         class="contact-form package-request-form maintenance-request-form"
         name="website-maintenance"
         method="POST"
-        enctype="multipart/form-data"
       >
         <input type="hidden" name="form-name" value="website-maintenance" />
         <label>
@@ -650,8 +654,8 @@
           </select>
         </label>
         <label>
-          Upload Screenshot / Error Image
-          <input type="file" name="screenshot" accept="image/*" />
+          Screenshot / Error Reference (Optional)
+          <input type="text" name="screenshot-ref" placeholder="Image link or description (optional)" />
         </label>
         <label class="full-field">
           Issue / Requirement Details
@@ -683,7 +687,7 @@
       <div class="container footer-grid">
         <div class="footer-brand">
           <img src="/public/assets/images/LogoGenerated.png" alt="ABSS Nexus Technologies logo" />
-          <h2>ABSS Nexus Technologies</h2>
+          <p class="footer-brand-title">ABSS Nexus Technologies</p>
           <p>
             Building modern digital solutions for businesses, startups, institutions, and
             individuals.

@@ -40,23 +40,6 @@
   const isApiMode = () => (config.mode || "local") === "api";
   const getToken = () => sessionStorage.getItem(tokenKey) || "";
 
-  const requestJsonSync = (method, path, body) => {
-    const request = new XMLHttpRequest();
-    request.open(method, `${apiBaseUrl}${path}`, false);
-    request.setRequestHeader("Content-Type", "application/json");
-    const token = getToken();
-    if (token) {
-      request.setRequestHeader("Authorization", `Bearer ${token}`);
-    }
-    request.send(body ? JSON.stringify(body) : null);
-
-    if (request.status < 200 || request.status >= 300) {
-      throw new Error(`Request failed: ${request.status}`);
-    }
-
-    return request.responseText ? JSON.parse(request.responseText) : null;
-  };
-
   const requestJson = async (method, path, body, options = {}) => {
     const headers = {
       "Content-Type": "application/json",
@@ -87,7 +70,7 @@
 
     loadState(defaultState) {
       if (isApiMode() && getToken()) {
-        return mergeContactLeads(requestJsonSync("GET", "/api/admin/state"));
+        return mergeContactLeads(readJson(stateKey, defaultState));
       }
 
       if (isApiMode()) {
@@ -97,18 +80,46 @@
       return mergeContactLeads(readJson(stateKey, defaultState));
     },
 
-    saveState(state) {
+    async loadStateAsync(defaultState) {
       if (isApiMode() && getToken()) {
-        requestJsonSync("PUT", "/api/admin/state", state);
-        writeJson(stateKey, state);
+        try {
+          const remoteState = await requestJson("GET", "/api/admin/state");
+          if (remoteState) {
+            writeJson(stateKey, remoteState);
+            return mergeContactLeads(remoteState);
+          }
+        } catch (error) {
+          console.warn("Remote state fetch failed, falling back to local cache", error);
+        }
+      }
+      return this.loadState(defaultState);
+    },
+
+    saveState(state) {
+      writeJson(stateKey, state);
+
+      if (isApiMode() && getToken()) {
+        requestJson("PUT", "/api/admin/state", state).catch((error) => {
+          console.error("Background state sync failed:", error);
+        });
         return;
       }
 
-      if (isApiMode()) {
+      if (isApiMode() && !getToken()) {
         throw new Error("Admin session required");
       }
+    },
 
+    async saveStateAsync(state) {
       writeJson(stateKey, state);
+
+      if (isApiMode() && getToken()) {
+        return requestJson("PUT", "/api/admin/state", state);
+      }
+
+      if (isApiMode() && !getToken()) {
+        throw new Error("Admin session required");
+      }
     },
 
     queueContactLead(lead) {
@@ -230,6 +241,9 @@
 
       try {
         const state = await requestJson("GET", "/api/admin/state");
+        if (state) {
+          writeJson(stateKey, state);
+        }
         return { authenticated: true, state: mergeContactLeads(state || defaultState || {}) };
       } catch (error) {
         sessionStorage.removeItem(tokenKey);

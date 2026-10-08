@@ -2,62 +2,77 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://abssnexus.in/</loc>
+    <lastmod>2026-10-08</lastmod>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://abssnexus.in/about</loc>
+    <lastmod>2026-10-08</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://abssnexus.in/services</loc>
+    <lastmod>2026-10-08</lastmod>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://abssnexus.in/services/website-development</loc>
+    <lastmod>2026-10-08</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://abssnexus.in/services/ui-ux-design</loc>
+    <lastmod>2026-10-08</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://abssnexus.in/services/website-maintenance</loc>
+    <lastmod>2026-10-08</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://abssnexus.in/projects</loc>
+    <lastmod>2026-10-08</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://abssnexus.in/contact</loc>
+    <lastmod>2026-10-08</lastmod>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://abssnexus.in/pricing</loc>
+    <lastmod>2026-10-08</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://abssnexus.in/privacy-policy</loc>
+    <lastmod>2026-10-08</lastmod>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://abssnexus.in/terms-and-conditions</loc>
+    <lastmod>2026-10-08</lastmod>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://abssnexus.in/disclaimer</loc>
+    <lastmod>2026-10-08</lastmod>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://abssnexus.in/refund-policy</loc>
+    <lastmod>2026-10-08</lastmod>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://abssnexus.in/support-policy</loc>
+    <lastmod>2026-10-08</lastmod>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://abssnexus.in/sitemap</loc>
+    <lastmod>2026-10-08</lastmod>
     <priority>0.3</priority>
   </url>
 </urlset>

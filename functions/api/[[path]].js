@@ -121,6 +121,28 @@ const safeLogError = (label, error) => {
   console.error(label, error?.message || error);
 };
 
+const verifyTurnstileToken = async (token, secret, clientIp) => {
+  if (!secret) return true;
+  if (!token) return false;
+
+  try {
+    const formData = new FormData();
+    formData.append("secret", secret);
+    formData.append("response", token);
+    if (clientIp) formData.append("remoteip", clientIp);
+
+    const result = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST",
+      body: formData,
+    });
+    const outcome = await result.json();
+    return Boolean(outcome.success);
+  } catch (error) {
+    safeLogError("Turnstile verification error", error);
+    return false;
+  }
+};
+
 const readState = async (env) => {
   const storedState = await env.ABSS_ADMIN.get(stateKey, "json");
   return storedState || defaultState;
@@ -449,12 +471,41 @@ export async function onRequest(context) {
         return respond(415, { success: false, message: "Please review the submitted information." });
       }
 
+      const origin = request.headers.get("Origin") || "";
+      if (origin) {
+        try {
+          const originHost = new URL(origin).hostname;
+          const allowedHosts = ["abssnexus.in", "www.abssnexus.in", "localhost", "127.0.0.1"];
+          if (!allowedHosts.includes(originHost) && !originHost.endsWith(".pages.dev")) {
+            return respond(403, { success: false, message: "Forbidden request origin." });
+          }
+        } catch (originError) {
+          return respond(403, { success: false, message: "Invalid request origin." });
+        }
+      }
+
+      let input;
+      try {
+        input = await request.json();
+      } catch (jsonErr) {
+        return respond(400, { success: false, message: "Invalid JSON payload." });
+      }
+
+      const validation = validateContactLeadInput(input);
+      if (!validation.ok) return respond(validation.status, validation.body);
+
+      if (env.TURNSTILE_SECRET_KEY) {
+        const clientIp = request.headers.get("CF-Connecting-IP") || "";
+        const turnstileToken = input["cf-turnstile-response"] || input.turnstileToken || "";
+        const isValid = await verifyTurnstileToken(turnstileToken, env.TURNSTILE_SECRET_KEY, clientIp);
+        if (!isValid) {
+          return respond(403, { success: false, message: "Bot verification failed. Please refresh and try again." });
+        }
+      }
+
       if (hasD1(env)) {
         try {
           await initializeDatabase(env.ABSS_DB);
-          const input = await request.json();
-          const validation = validateContactLeadInput(input);
-          if (!validation.ok) return respond(validation.status, validation.body);
           if (!String(input.name || input.client || "").trim() || (!String(input.email || "").trim() && !String(input.phone || "").trim())) {
             return respond(400, { error: "Name and contact details are required." });
           }
@@ -470,9 +521,6 @@ export async function onRequest(context) {
         return respond(503, { error: "Cloudflare storage is not configured." });
       }
 
-      const input = await request.json();
-      const validation = validateContactLeadInput(input);
-      if (!validation.ok) return respond(validation.status, validation.body);
       const lead = normalizeLead(input);
       if ((!lead.name && !lead.client) || (!lead.email && !lead.phone)) {
         return respond(400, { error: "Name and contact details are required." });

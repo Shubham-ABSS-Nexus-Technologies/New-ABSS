@@ -361,12 +361,24 @@ h3 {
 .intro-grid,
 .about-grid,
 .two-column,
-.contact-grid,
 .why-grid {
   display: grid;
   grid-template-columns: 0.9fr 1.1fr;
   gap: 38px;
   align-items: center;
+}
+
+.contact-grid {
+  display: grid;
+  grid-template-columns: 0.92fr 1.08fr;
+  gap: 42px;
+  align-items: start;
+}
+
+.contact-copy {
+  position: sticky;
+  top: 96px;
+  align-self: start;
 }
 
 .intro-grid p:last-child,
@@ -875,6 +887,11 @@ h3 {
   display: block;
 }
 
+.form-error-summary[hidden],
+.form-error-summary:empty {
+  display: none !important;
+}
+
 .required-mark {
   margin-top: 4px;
   color: var(--gray);
@@ -883,19 +900,25 @@ h3 {
 }
 
 .field-help {
-  margin-top: 7px;
+  margin-top: 6px;
   color: var(--gray);
-  font-size: 0.82rem;
-  line-height: 1.45;
+  font-size: 0.8rem;
+  line-height: 1.4;
 }
 
 .field-error {
   min-height: 18px;
-  margin-top: 7px;
+  margin-top: 6px;
   color: #b42318;
   font-size: 0.82rem;
   font-weight: 800;
   line-height: 1.4;
+}
+
+.field-error:empty {
+  display: none !important;
+  min-height: 0 !important;
+  margin-top: 0 !important;
 }
 
 .form-error-summary {
@@ -1628,7 +1651,75 @@ h3 {
 .contact-card-grid article,
 .map-card,
 .hours-card {
+  display: flex;
+  flex-direction: column;
   padding: 24px;
+  border-radius: 12px;
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+.contact-card-grid article:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 22px 60px rgba(13, 27, 42, 0.12);
+}
+
+.contact-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.contact-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: rgba(0, 119, 255, 0.09);
+  color: var(--blue);
+  flex-shrink: 0;
+}
+
+.contact-card-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.contact-card-icon.whatsapp {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: rgba(0, 119, 255, 0.08);
+  color: var(--blue);
+}
+
+.status-pill.green {
+  background: rgba(16, 185, 129, 0.1);
+  color: #047857;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+}
+
+.contact-card-grid h3 {
+  font-size: 1.12rem;
+  margin: 0 0 6px;
 }
 
 .contact-card-grid a {
@@ -1641,7 +1732,43 @@ h3 {
 .map-card p,
 .hours-card p {
   color: var(--gray);
-  line-height: 1.65;
+  line-height: 1.6;
+  font-size: 0.9rem;
+  margin: 0 0 16px;
+}
+
+.contact-card-action {
+  margin-top: auto;
+  width: 100%;
+  text-align: center;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid rgba(0, 119, 255, 0.18);
+  background: rgba(0, 119, 255, 0.06);
+  color: var(--blue);
+  transition: all 0.2s ease;
+}
+
+.contact-card-action:hover {
+  background: var(--blue);
+  color: #ffffff;
+  border-color: var(--blue);
+}
+
+.contact-card-action.whatsapp {
+  border-color: rgba(16, 185, 129, 0.3);
+  background: #059669;
+  color: #ffffff;
+}
+
+.contact-card-action.whatsapp:hover {
+  background: #047857;
 }
 
 .legal-section {
@@ -1788,39 +1915,248 @@ h3 {
   visibility: hidden;
 }
 
-.contact-form {
-  display: grid;
-  gap: 16px;
-  padding: 24px;
+.contact-copy {
+  display: flex;
+  flex-direction: column;
 }
 
-.contact-form label {
-  display: grid;
-  gap: 8px;
+.contact-reassurance-card {
+  margin-top: 24px;
+  padding: 22px;
+  border-radius: 12px;
+  background: var(--white);
+  border: 1px solid rgba(13, 27, 42, 0.09);
+  box-shadow: 0 12px 36px rgba(13, 27, 42, 0.05);
+}
+
+.contact-reassurance-card h4 {
+  margin: 0 0 14px;
+  font-size: 0.98rem;
   color: var(--navy);
-  font-size: 0.92rem;
   font-weight: 800;
 }
 
-.contact-form .checkbox-label {
+.reassurance-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.reassurance-list li {
   display: flex;
-  grid-template-columns: none;
   align-items: flex-start;
   gap: 10px;
+  font-size: 0.88rem;
   color: var(--gray);
   line-height: 1.5;
 }
 
-.contact-form input,
-.contact-form select,
-.contact-form textarea {
+.reassurance-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(16, 185, 129, 0.12);
+  color: #047857;
+  font-size: 0.75rem;
+  font-weight: 900;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.quick-chat-box {
+  margin-top: 18px;
+  padding: 20px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.09), rgba(0, 194, 255, 0.06));
+  border: 1px solid rgba(16, 185, 129, 0.24);
+}
+
+.quick-chat-box h4 {
+  margin: 0 0 6px;
+  font-size: 0.96rem;
+  color: var(--navy);
+  font-weight: 800;
+}
+
+.quick-chat-box p {
+  margin: 0 0 14px;
+  font-size: 0.86rem;
+  color: var(--gray);
+  line-height: 1.5;
+}
+
+.quick-chat-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: #059669;
+  color: #ffffff;
+  font-size: 0.88rem;
+  font-weight: 800;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.quick-chat-btn:hover {
+  background: #047857;
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
+.contact-form {
+  display: grid;
+  gap: 18px;
+  padding: 30px;
+  border-radius: 14px;
+}
+
+.form-section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 10px;
+  margin-top: 8px;
+  border-bottom: 1px solid rgba(13, 27, 42, 0.08);
+}
+
+.form-section-header:first-of-type {
+  margin-top: 0;
+}
+
+.form-step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--blue);
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.form-section-header h3 {
+  margin: 0;
+  font-size: 0.98rem;
+  color: var(--navy);
+  font-weight: 800;
+}
+
+.form-section-header p {
+  margin: 2px 0 0;
+  font-size: 0.8rem;
+  color: var(--gray);
+}
+
+.form-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.contact-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: var(--navy);
+  font-size: 0.92rem;
+  font-weight: 700;
   width: 100%;
-  border: 1px solid rgba(13, 27, 42, 0.14);
+}
+
+.label-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.badge-required {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #e11d48;
+  background: rgba(225, 29, 72, 0.08);
+  padding: 2px 8px;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+}
+
+.badge-optional {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--gray);
+  background: rgba(75, 85, 99, 0.08);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.contact-form .checkbox-label {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--gray);
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.contact-form input:not([type="checkbox"]):not([type="radio"]),
+.contact-form select {
+  width: 100%;
+  height: 48px;
+  min-height: 48px;
+  max-height: 48px;
+  border: 1px solid rgba(13, 27, 42, 0.16);
   border-radius: 8px;
-  padding: 14px 15px;
+  padding: 0 14px;
   color: var(--navy);
   font: inherit;
+  font-size: 0.94rem;
+  line-height: 48px;
   background: var(--light);
+  box-sizing: border-box;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+.contact-form textarea {
+  width: 100%;
+  min-height: 130px;
+  border: 1px solid rgba(13, 27, 42, 0.16);
+  border-radius: 8px;
+  padding: 12px 14px;
+  color: var(--navy);
+  font: inherit;
+  font-size: 0.94rem;
+  line-height: 1.5;
+  background: var(--light);
+  box-sizing: border-box;
+  resize: vertical;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+.contact-form input:hover,
+.contact-form select:hover,
+.contact-form textarea:hover {
+  border-color: rgba(0, 119, 255, 0.4);
+}
+
+.contact-form input:focus,
+.contact-form select:focus,
+.contact-form textarea:focus {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+  border-color: var(--blue);
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(0, 119, 255, 0.12);
 }
 
 .contact-form .checkbox-label input {
@@ -1830,6 +2166,42 @@ h3 {
 
 .contact-form textarea {
   resize: vertical;
+}
+
+.textarea-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: var(--gray);
+}
+
+.field-hint {
+  font-size: 0.78rem;
+  color: var(--gray);
+}
+
+.form-whatsapp-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  margin-top: 4px;
+  background: rgba(16, 185, 129, 0.06);
+  border: 1px dashed rgba(16, 185, 129, 0.3);
+  border-radius: 8px;
+  font-size: 0.86rem;
+  color: var(--navy);
+}
+
+.form-whatsapp-fallback a {
+  color: #059669;
+  font-weight: 800;
+  text-decoration: underline;
 }
 
 .contact-form button:disabled {
@@ -2758,13 +3130,16 @@ h3 {
 }
 
 .footer h2,
+.footer .footer-brand-title,
 .footer h3 {
   color: var(--white);
 }
 
-.footer h2 {
+.footer h2,
+.footer .footer-brand-title {
   margin-bottom: 10px;
   font-size: 1.15rem;
+  font-weight: 700;
 }
 
 .footer h3 {
@@ -3292,7 +3667,8 @@ h3 {
     grid-template-columns: 1fr;
   }
 
-  .package-request-form {
+  .package-request-form,
+  .form-row-2 {
     grid-template-columns: 1fr;
   }
 
@@ -3537,10 +3913,18 @@ h3 {
     gap: 13px;
   }
 
-  .contact-form input,
-  .contact-form select,
+  .contact-form input:not([type="checkbox"]):not([type="radio"]),
+  .contact-form select {
+    height: 46px;
+    min-height: 46px;
+    max-height: 46px;
+    padding: 0 13px;
+    line-height: 46px;
+    font-size: 0.95rem;
+  }
+
   .contact-form textarea {
-    min-height: 44px;
+    min-height: 110px;
     padding: 12px 13px;
     font-size: 0.95rem;
   }

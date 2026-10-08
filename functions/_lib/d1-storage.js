@@ -1,4 +1,6 @@
 const allowedLeadStatuses = new Set(["New", "Follow Up", "Call Booked", "Proposal Sent", "Converted", "Rejected"]);
+const allowedInternshipPrograms = new Set(["Web Development Internship", "Software Development Internship", "UI/UX Design Internship"]);
+const allowedInternshipStatuses = new Set(["New", "Under Review", "Shortlisted", "Interview Scheduled", "Selected", "Rejected"]);
 const stateKey = "admin-state.json";
 const migrationKey = "kv_to_d1_migration_v1";
 const staleDemoIds = new Set([
@@ -76,6 +78,57 @@ const leadFromRow = (row = {}) => ({
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });
+
+const internshipApplicationFromRow = (row = {}) => ({
+  id: text(row.id, "", 120),
+  fullName: text(row.full_name, "", 160),
+  email: text(row.email, "", 254),
+  phone: text(row.phone, "", 30),
+  college: text(row.college, "", 180),
+  course: text(row.course, "", 160),
+  graduationYear: text(row.graduation_year, "", 12),
+  internshipProgram: text(row.internship_program, "", 80),
+  technicalSkills: text(row.technical_skills, "", 2000),
+  experienceLevel: text(row.experience_level, "", 40),
+  portfolioUrl: text(row.portfolio_url, "", 500),
+  githubUrl: text(row.github_url, "", 500),
+  linkedinUrl: text(row.linkedin_url, "", 500),
+  resumeReference: text(row.resume_reference, "", 500),
+  motivation: text(row.motivation, "", 5000),
+  status: text(row.status, "New", 40),
+  adminNotes: text(row.admin_notes, "", 4000),
+  createdAt: dateText(row.created_at),
+  updatedAt: dateText(row.updated_at),
+});
+
+const normalizeInternshipApplication = (input = {}, options = {}) => {
+  const now = new Date().toISOString();
+  const program = text(input.internshipProgram || input.internship_program, "", 80);
+  const currentStatus = text(input.status, "New", 40);
+  const createdAt = options.preserveCreatedAt ? dateText(input.createdAt || input.created_at, now) : now;
+
+  return {
+    id: id(input.id, "internship"),
+    fullName: text(input.fullName || input.full_name, "", 160),
+    email: text(input.email, "", 254).toLowerCase(),
+    phone: text(input.phone, "", 30),
+    college: text(input.college, "", 180),
+    course: text(input.course, "", 160),
+    graduationYear: text(input.graduationYear || input.graduation_year, "", 12),
+    internshipProgram: allowedInternshipPrograms.has(program) ? program : "",
+    technicalSkills: text(input.technicalSkills || input.technical_skills, "", 2000),
+    experienceLevel: text(input.experienceLevel || input.experience_level, "", 40),
+    portfolioUrl: text(input.portfolioUrl || input.portfolio_url, "", 500),
+    githubUrl: text(input.githubUrl || input.github_url, "", 500),
+    linkedinUrl: text(input.linkedinUrl || input.linkedin_url, "", 500),
+    resumeReference: text(input.resumeReference || input.resume_reference, "", 500),
+    motivation: text(input.motivation, "", 5000),
+    status: allowedInternshipStatuses.has(currentStatus) ? currentStatus : "New",
+    adminNotes: text(input.adminNotes || input.admin_notes, "", 4000),
+    createdAt,
+    updatedAt: now,
+  };
+};
 
 const normalizeLead = (input = {}, migrationTimestamp = "") => {
   const now = migrationTimestamp || new Date().toISOString();
@@ -320,6 +373,90 @@ export const updateLead = async (db, leadId, input) => {
 
 export const deleteLead = async (db, leadId) => run(db, "DELETE FROM leads WHERE id = ?", text(leadId, "", 120));
 
+export const listInternshipApplications = async (db, options = {}) => {
+  const page = Math.max(Number(options.page || 1), 1);
+  const pageSize = Math.min(Math.max(Number(options.pageSize || 20), 1), 100);
+  const filters = [];
+  const params = [];
+  if (options.status && options.status !== "all") {
+    filters.push("status = ?");
+    params.push(text(options.status, "", 40));
+  }
+  if (options.program && options.program !== "all") {
+    filters.push("internship_program = ?");
+    params.push(text(options.program, "", 80));
+  }
+  if (options.search) {
+    filters.push("(full_name LIKE ? OR email LIKE ? OR phone LIKE ? OR college LIKE ? OR course LIKE ? OR internship_program LIKE ? OR technical_skills LIKE ?)");
+    const search = `%${text(options.search, "", 120)}%`;
+    params.push(search, search, search, search, search, search, search);
+  }
+  const where = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
+  const order = options.sort === "oldest" ? "ASC" : "DESC";
+  const rows = await all(db, `SELECT * FROM internship_applications ${where} ORDER BY created_at ${order} LIMIT ? OFFSET ?`, ...params, pageSize, (page - 1) * pageSize);
+  const countRow = await first(db, `SELECT COUNT(*) AS total FROM internship_applications ${where}`, ...params);
+  return { items: rows.map(internshipApplicationFromRow), total: Number(countRow?.total || 0), page, pageSize };
+};
+
+export const getInternshipApplication = async (db, applicationId) => {
+  const row = await first(db, "SELECT * FROM internship_applications WHERE id = ?", text(applicationId, "", 120));
+  return row ? internshipApplicationFromRow(row) : null;
+};
+
+export const findInternshipApplication = async (db, email, internshipProgram) => {
+  const row = await first(
+    db,
+    "SELECT * FROM internship_applications WHERE email = ? AND internship_program = ? LIMIT 1",
+    text(email, "", 254).toLowerCase(),
+    text(internshipProgram, "", 80)
+  );
+  return row ? internshipApplicationFromRow(row) : null;
+};
+
+const saveInternshipApplication = async (db, application) =>
+  run(
+    db,
+    "INSERT OR REPLACE INTO internship_applications (id, full_name, email, phone, college, course, graduation_year, internship_program, technical_skills, experience_level, portfolio_url, github_url, linkedin_url, resume_reference, motivation, status, admin_notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    application.id,
+    application.fullName,
+    application.email,
+    application.phone,
+    application.college,
+    application.course,
+    application.graduationYear,
+    application.internshipProgram,
+    application.technicalSkills,
+    application.experienceLevel,
+    application.portfolioUrl,
+    application.githubUrl,
+    application.linkedinUrl,
+    application.resumeReference,
+    application.motivation,
+    application.status,
+    application.adminNotes,
+    application.createdAt,
+    application.updatedAt
+  );
+
+export const createInternshipApplication = async (db, input) => {
+  const application = normalizeInternshipApplication(input);
+  await saveInternshipApplication(db, application);
+  await addActivity(db, { type: "internship", message: `${application.fullName} submitted an internship application`, entityId: application.id });
+  return application;
+};
+
+export const updateInternshipApplication = async (db, applicationId, input) => {
+  const existing = await getInternshipApplication(db, applicationId);
+  if (!existing) return null;
+  const application = normalizeInternshipApplication({ ...existing, ...input, id: applicationId, createdAt: existing.createdAt }, { preserveCreatedAt: true });
+  await saveInternshipApplication(db, application);
+  await addActivity(db, { type: "internship", message: `${application.fullName} application moved to ${application.status}`, entityId: application.id });
+  return application;
+};
+
+export const deleteInternshipApplication = async (db, applicationId) =>
+  run(db, "DELETE FROM internship_applications WHERE id = ?", text(applicationId, "", 120));
+
 export const listProjects = async (db) => (await all(db, "SELECT * FROM projects ORDER BY created_at DESC")).map(projectFromRow);
 export const createProject = async (db, input) => {
   const project = normalizeProject(input);
@@ -398,6 +535,7 @@ export const readD1State = async (db) => ({
   tickets: await listTickets(db),
   pricing: await listPricing(db),
   activity: await listActivity(db),
+  internshipApplications: (await listInternshipApplications(db, { page: 1, pageSize: 20 })).items,
   metrics: await getDashboardMetrics(db),
 });
 
@@ -497,11 +635,12 @@ export const migrateKvStateToD1 = async (db, kv) => {
 };
 
 export const getStorageStatus = async (db, kv) => {
-  const [leadCount, projectCount, clientCount, ticketCount, migration] = await Promise.all([
+  const [leadCount, projectCount, clientCount, ticketCount, internshipCount, migration] = await Promise.all([
     first(db, "SELECT COUNT(*) AS total FROM leads"),
     first(db, "SELECT COUNT(*) AS total FROM projects"),
     first(db, "SELECT COUNT(*) AS total FROM clients"),
     first(db, "SELECT COUNT(*) AS total FROM tickets"),
+    first(db, "SELECT COUNT(*) AS total FROM internship_applications"),
     first(db, "SELECT value, updated_at FROM app_metadata WHERE key = ?", migrationKey),
   ]);
   return {
@@ -513,6 +652,7 @@ export const getStorageStatus = async (db, kv) => {
       projects: Number(projectCount?.total || 0),
       clients: Number(clientCount?.total || 0),
       tickets: Number(ticketCount?.total || 0),
+      internshipApplications: Number(internshipCount?.total || 0),
     },
     migration: migration ? { completed: true, updatedAt: migration.updated_at, details: JSON.parse(migration.value || "{}") } : { completed: false },
   };

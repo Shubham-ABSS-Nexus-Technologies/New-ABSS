@@ -210,6 +210,22 @@ inquiryMessage?.addEventListener("input", () => {
   if (characterCount) characterCount.textContent = String(inquiryMessage.value.length);
 });
 
+inquiryForm?.addEventListener("input", (event) => {
+  const target = event.target;
+  if (!target || !target.name) return;
+  target.removeAttribute("aria-invalid");
+  const err = inquiryForm.querySelector(`[data-field-error="${CSS.escape(target.name)}"]`);
+  if (err) err.textContent = "";
+});
+
+inquiryForm?.addEventListener("change", (event) => {
+  const target = event.target;
+  if (!target || !target.name) return;
+  target.removeAttribute("aria-invalid");
+  const err = inquiryForm.querySelector(`[data-field-error="${CSS.escape(target.name)}"]`);
+  if (err) err.textContent = "";
+});
+
 const projectFilterButtons = document.querySelectorAll("[data-project-filter]");
 const projectCards = document.querySelectorAll("[data-project-category]");
 
@@ -424,6 +440,7 @@ const formToLead = (form) => {
     source: sourceMap[formName] || "Contact Form",
     formName,
     consent,
+    turnstileToken: textValue("cf-turnstile-response", "turnstileToken"),
   };
 };
 

@@ -24,6 +24,7 @@ const contentTypes = {
   ".jpeg": "image/jpeg",
   ".webp": "image/webp",
   ".svg": "image/svg+xml",
+  ".ico": "image/x-icon",
 };
 
 const publicRedirects = {
@@ -72,6 +73,20 @@ const publicRedirects = {
   "/about/": "/about",
   "/services/": "/services",
   "/services/website-development/": "/services/website-development",
+  "/pricing.html": "/pricing",
+  "/src/pages/pricing": "/pricing",
+  "/src/pages/pricing.html": "/pricing",
+  "/pricing/": "/pricing",
+  "/service-ui-ux-design": "/services/ui-ux-design",
+  "/service-ui-ux-design.html": "/services/ui-ux-design",
+  "/src/pages/service-ui-ux-design": "/services/ui-ux-design",
+  "/src/pages/service-ui-ux-design.html": "/services/ui-ux-design",
+  "/services/ui-ux-design/": "/services/ui-ux-design",
+  "/service-website-maintenance": "/services/website-maintenance",
+  "/service-website-maintenance.html": "/services/website-maintenance",
+  "/src/pages/service-website-maintenance": "/services/website-maintenance",
+  "/src/pages/service-website-maintenance.html": "/services/website-maintenance",
+  "/services/website-maintenance/": "/services/website-maintenance",
   "/projects/": "/projects",
   "/contact/": "/contact",
   "/privacy-policy/": "/privacy-policy",
@@ -87,8 +102,11 @@ const rewrites = {
   "/about": "/src/pages/about.html",
   "/services": "/src/pages/services.html",
   "/services/website-development": "/src/pages/service-website-development.html",
+  "/services/ui-ux-design": "/src/pages/service-ui-ux-design.html",
+  "/services/website-maintenance": "/src/pages/service-website-maintenance.html",
   "/projects": "/src/pages/projects.html",
   "/contact": "/src/pages/contact.html",
+  "/pricing": "/src/pages/pricing.html",
   "/privacy-policy": "/src/pages/privacy-policy.html",
   "/terms-and-conditions": "/src/pages/terms-conditions.html",
   "/disclaimer": "/src/pages/disclaimer.html",
@@ -253,6 +271,20 @@ const server = http.createServer(async (request, response) => {
     }
 
     if (request.method === "POST" && pathname === "/api/leads/contact") {
+      const origin = request.headers.origin;
+      if (origin) {
+        try {
+          const originHost = new URL(origin).hostname;
+          const allowedHosts = ["localhost", "127.0.0.1", "abssnexus.in", "www.abssnexus.in"];
+          if (!allowedHosts.includes(originHost) && !originHost.endsWith(".pages.dev")) {
+            send(response, 403, { error: "Forbidden origin" });
+            return;
+          }
+        } catch {
+          send(response, 403, { error: "Invalid origin" });
+          return;
+        }
+      }
       const body = await readBody(request);
       const db = readDb();
       const lead = normalizeLead(body);

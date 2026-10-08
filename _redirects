@@ -46,10 +46,28 @@ https://www.abssnexus.in/* https://abssnexus.in/:splat 301
 /src/pages/sitemap /sitemap 301
 /src/pages/sitemap.html /sitemap 301
 
+/pricing.html /pricing 301
+/src/pages/pricing /pricing 301
+/src/pages/pricing.html /pricing 301
+/pricing/ /pricing 301
+
 /service-website-development /services/website-development 301
 /service-website-development.html /services/website-development 301
 /src/pages/service-website-development /services/website-development 301
 /src/pages/service-website-development.html /services/website-development 301
+/services/website-development/ /services/website-development 301
+
+/service-ui-ux-design /services/ui-ux-design 301
+/service-ui-ux-design.html /services/ui-ux-design 301
+/src/pages/service-ui-ux-design /services/ui-ux-design 301
+/src/pages/service-ui-ux-design.html /services/ui-ux-design 301
+/services/ui-ux-design/ /services/ui-ux-design 301
+
+/service-website-maintenance /services/website-maintenance 301
+/service-website-maintenance.html /services/website-maintenance 301
+/src/pages/service-website-maintenance /services/website-maintenance 301
+/src/pages/service-website-maintenance.html /services/website-maintenance 301
+/services/website-maintenance/ /services/website-maintenance 301
 
 /case-study-template.html /projects 301
 /src/pages/case-study-template /projects 301
@@ -57,7 +75,6 @@ https://www.abssnexus.in/* https://abssnexus.in/:splat 301
 
 /about/ /about 301
 /services/ /services 301
-/services/website-development/ /services/website-development 301
 /projects/ /projects 301
 /contact/ /contact 301
 /privacy-policy/ /privacy-policy 301
