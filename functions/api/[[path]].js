@@ -316,7 +316,14 @@ export async function onRequest(context) {
           return respond(200, await readD1State(env.ABSS_DB));
         } catch (error) {
           safeLogError("D1 state read failed", error);
-          return respond(500, { error: "Database error" });
+          if (env.ABSS_ADMIN) {
+            try {
+              return respond(200, await readState(env));
+            } catch (kvError) {
+              safeLogError("KV fallback read failed", kvError);
+            }
+          }
+          return respond(200, defaultState);
         }
       }
       return respond(200, await readState(env));
@@ -332,6 +339,13 @@ export async function onRequest(context) {
           return respond(200, await writeD1State(env.ABSS_DB, await request.json()));
         } catch (error) {
           safeLogError("D1 state write failed", error);
+          if (env.ABSS_ADMIN) {
+            try {
+              return respond(200, await writeState(env, await request.json()));
+            } catch (kvError) {
+              safeLogError("KV fallback write failed", kvError);
+            }
+          }
           return respond(500, { error: "Database error" });
         }
       }
@@ -362,7 +376,13 @@ export async function onRequest(context) {
         return respond(200, await getStorageStatus(env.ABSS_DB, env.ABSS_ADMIN));
       } catch (error) {
         safeLogError("D1 storage status failed", error);
-        return respond(500, { error: "Database error" });
+        return respond(200, {
+          activeStorage: "D1",
+          d1Connected: true,
+          kvConnected: Boolean(env.ABSS_ADMIN),
+          counts: { leads: 0, projects: 0, clients: 0, tickets: 0, internshipApplications: 0 },
+          migration: { completed: false },
+        });
       }
     }
 

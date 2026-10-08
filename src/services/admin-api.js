@@ -64,7 +64,9 @@
           message = errorData.error;
         }
       } catch {}
-      throw new Error(message);
+      const err = new Error(message);
+      err.status = response.status;
+      throw err;
     }
 
     return response.status === 204 ? null : response.json();
@@ -242,7 +244,8 @@
         return { authenticated: false, state: null };
       }
 
-      if (!getToken()) {
+      const token = getToken();
+      if (!token) {
         return { authenticated: false, state: null };
       }
 
@@ -253,8 +256,13 @@
         }
         return { authenticated: true, state: mergeContactLeads(state || defaultState || {}) };
       } catch (error) {
-        sessionStorage.removeItem(tokenKey);
-        return { authenticated: false, state: null };
+        if (error.status === 401 || (error.message && error.message.toLowerCase().includes("unauthorized"))) {
+          sessionStorage.removeItem(tokenKey);
+          return { authenticated: false, state: null };
+        }
+        console.warn("Session validation warning, keeping session with local state", error);
+        const cachedState = readJson(stateKey, defaultState);
+        return { authenticated: true, state: mergeContactLeads(cachedState || {}) };
       }
     },
 

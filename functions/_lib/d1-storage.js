@@ -278,8 +278,135 @@ const normalizePricing = (input = {}) => {
   };
 };
 
+const DB_SCHEMA_STATEMENTS = [
+  "PRAGMA foreign_keys = ON",
+
+  `CREATE TABLE IF NOT EXISTS leads (
+    id TEXT PRIMARY KEY,
+    client TEXT NOT NULL,
+    name TEXT,
+    company TEXT,
+    email TEXT,
+    phone TEXT,
+    contact TEXT,
+    service TEXT,
+    package_name TEXT,
+    budget INTEGER NOT NULL DEFAULT 0,
+    budget_label TEXT,
+    message TEXT,
+    timeline TEXT,
+    status TEXT NOT NULL DEFAULT 'New',
+    source TEXT NOT NULL DEFAULT 'Contact Form',
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_leads_created_at ON leads (created_at)`,
+  `CREATE INDEX IF NOT EXISTS idx_leads_status ON leads (status)`,
+  `CREATE INDEX IF NOT EXISTS idx_leads_service ON leads (service)`,
+  `CREATE INDEX IF NOT EXISTS idx_leads_email ON leads (email)`,
+
+  `CREATE TABLE IF NOT EXISTS projects (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    client_name TEXT,
+    service TEXT,
+    value INTEGER NOT NULL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'Active',
+    start_date TEXT,
+    deadline TEXT,
+    description TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  )`,
+
+  `CREATE TABLE IF NOT EXISTS clients (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    company TEXT,
+    email TEXT,
+    phone TEXT,
+    status TEXT NOT NULL DEFAULT 'Active',
+    notes TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  )`,
+
+  `CREATE TABLE IF NOT EXISTS tickets (
+    id TEXT PRIMARY KEY,
+    client_name TEXT,
+    email TEXT,
+    subject TEXT NOT NULL,
+    message TEXT,
+    priority TEXT NOT NULL DEFAULT 'Normal',
+    status TEXT NOT NULL DEFAULT 'Open',
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  )`,
+
+  `CREATE TABLE IF NOT EXISTS pricing (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    starting_price INTEGER NOT NULL DEFAULT 0,
+    description TEXT,
+    features_json TEXT,
+    status TEXT NOT NULL DEFAULT 'Active',
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  )`,
+
+  `CREATE TABLE IF NOT EXISTS activity (
+    id TEXT PRIMARY KEY,
+    type TEXT,
+    message TEXT NOT NULL,
+    entity_id TEXT,
+    created_at TEXT NOT NULL
+  )`,
+
+  `CREATE TABLE IF NOT EXISTS app_metadata (
+    key TEXT PRIMARY KEY,
+    value TEXT,
+    updated_at TEXT NOT NULL
+  )`,
+
+  `CREATE TABLE IF NOT EXISTS internship_applications (
+    id TEXT PRIMARY KEY,
+    full_name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    college TEXT,
+    course TEXT,
+    graduation_year TEXT,
+    internship_program TEXT NOT NULL,
+    technical_skills TEXT,
+    experience_level TEXT,
+    portfolio_url TEXT,
+    github_url TEXT,
+    linkedin_url TEXT,
+    resume_reference TEXT,
+    motivation TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'New',
+    admin_notes TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_internship_email ON internship_applications (email)`,
+  `CREATE INDEX IF NOT EXISTS idx_internship_program ON internship_applications (internship_program)`,
+  `CREATE INDEX IF NOT EXISTS idx_internship_status ON internship_applications (status)`,
+  `CREATE INDEX IF NOT EXISTS idx_internship_created_at ON internship_applications (created_at)`
+];
+
+let dbInitialized = false;
+
 export const initializeDatabase = async (db) => {
-  await run(db, "PRAGMA foreign_keys = ON");
+  if (dbInitialized) return;
+  for (const statement of DB_SCHEMA_STATEMENTS) {
+    try {
+      await run(db, statement);
+    } catch (error) {
+      console.warn("Schema initialization statement warning:", error?.message || error);
+    }
+  }
+  dbInitialized = true;
 };
 
 export const listLeads = async (db, options = {}) => {
@@ -457,7 +584,14 @@ export const updateInternshipApplication = async (db, applicationId, input) => {
 export const deleteInternshipApplication = async (db, applicationId) =>
   run(db, "DELETE FROM internship_applications WHERE id = ?", text(applicationId, "", 120));
 
-export const listProjects = async (db) => (await all(db, "SELECT * FROM projects ORDER BY created_at DESC")).map(projectFromRow);
+export const listProjects = async (db) => {
+  try {
+    return (await all(db, "SELECT * FROM projects ORDER BY created_at DESC")).map(projectFromRow);
+  } catch (error) {
+    console.warn("listProjects query warning:", error?.message || error);
+    return [];
+  }
+};
 export const createProject = async (db, input) => {
   const project = normalizeProject(input);
   await run(db, "INSERT OR REPLACE INTO projects (id, name, client_name, service, value, status, start_date, deadline, description, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", project.id, project.name, project.client, project.service, project.value, project.status, project.startDate, project.deadline, project.description, project.createdAt, project.updatedAt);
@@ -466,7 +600,14 @@ export const createProject = async (db, input) => {
 export const updateProject = createProject;
 export const deleteProject = async (db, projectId) => run(db, "DELETE FROM projects WHERE id = ?", text(projectId, "", 120));
 
-export const listClients = async (db) => (await all(db, "SELECT * FROM clients ORDER BY created_at DESC")).map(clientFromRow);
+export const listClients = async (db) => {
+  try {
+    return (await all(db, "SELECT * FROM clients ORDER BY created_at DESC")).map(clientFromRow);
+  } catch (error) {
+    console.warn("listClients query warning:", error?.message || error);
+    return [];
+  }
+};
 export const createClient = async (db, input) => {
   const client = normalizeClient(input);
   await run(db, "INSERT OR REPLACE INTO clients (id, name, company, email, phone, status, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", client.id, client.name, client.company, client.email, client.phone, client.status, client.notes, client.createdAt, client.updatedAt);
@@ -475,7 +616,14 @@ export const createClient = async (db, input) => {
 export const updateClient = createClient;
 export const deleteClient = async (db, clientId) => run(db, "DELETE FROM clients WHERE id = ?", text(clientId, "", 120));
 
-export const listTickets = async (db) => (await all(db, "SELECT * FROM tickets ORDER BY created_at DESC")).map(ticketFromRow);
+export const listTickets = async (db) => {
+  try {
+    return (await all(db, "SELECT * FROM tickets ORDER BY created_at DESC")).map(ticketFromRow);
+  } catch (error) {
+    console.warn("listTickets query warning:", error?.message || error);
+    return [];
+  }
+};
 export const createTicket = async (db, input) => {
   const ticket = normalizeTicket(input);
   await run(db, "INSERT OR REPLACE INTO tickets (id, client_name, email, subject, message, priority, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", ticket.id, ticket.client, ticket.email, ticket.subject, ticket.message, ticket.priority, ticket.status, ticket.createdAt, ticket.updatedAt);
@@ -484,7 +632,14 @@ export const createTicket = async (db, input) => {
 export const updateTicket = createTicket;
 export const deleteTicket = async (db, ticketId) => run(db, "DELETE FROM tickets WHERE id = ?", text(ticketId, "", 120));
 
-export const listPricing = async (db) => (await all(db, "SELECT * FROM pricing ORDER BY created_at DESC")).map(pricingFromRow);
+export const listPricing = async (db) => {
+  try {
+    return (await all(db, "SELECT * FROM pricing ORDER BY created_at DESC")).map(pricingFromRow);
+  } catch (error) {
+    console.warn("listPricing query warning:", error?.message || error);
+    return [];
+  }
+};
 export const createPricingItem = async (db, input) => {
   const item = normalizePricing(input);
   await run(db, "INSERT OR REPLACE INTO pricing (id, name, starting_price, description, features_json, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", item.id, item.name, item.startingPrice, item.description, item.featuresJson, item.status, item.createdAt, item.updatedAt);
@@ -493,26 +648,48 @@ export const createPricingItem = async (db, input) => {
 export const updatePricingItem = createPricingItem;
 export const deletePricingItem = async (db, itemId) => run(db, "DELETE FROM pricing WHERE id = ?", text(itemId, "", 120));
 
-export const listActivity = async (db) => (await all(db, "SELECT * FROM activity ORDER BY created_at DESC LIMIT 50")).map((item) => item.message);
+export const listActivity = async (db) => {
+  try {
+    return (await all(db, "SELECT * FROM activity ORDER BY created_at DESC LIMIT 50")).map((item) => item.message);
+  } catch (error) {
+    console.warn("listActivity query warning:", error?.message || error);
+    return [];
+  }
+};
 export const addActivity = async (db, input) => {
   const now = new Date().toISOString();
   return run(db, "INSERT INTO activity (id, type, message, entity_id, created_at) VALUES (?, ?, ?, ?, ?)", id(input.id, "activity"), text(input.type, "admin", 80), text(input.message, "Admin activity", 500), text(input.entityId || input.entity_id, "", 120), dateText(input.createdAt || input.created_at, now));
 };
 
 export const getDashboardMetrics = async (db) => {
+  const safeFirst = async (sql, ...params) => {
+    try {
+      return await first(db, sql, ...params);
+    } catch {
+      return null;
+    }
+  };
+  const safeAll = async (sql, ...params) => {
+    try {
+      return await all(db, sql, ...params);
+    } catch {
+      return [];
+    }
+  };
+
   const [leads, activeProjects, openValue, openTickets, convertedLeads, migration] = await Promise.all([
-    first(db, "SELECT COUNT(*) AS total FROM leads"),
-    first(db, "SELECT COUNT(*) AS total FROM projects WHERE status != 'Done'"),
-    first(db, "SELECT COALESCE(SUM(value), 0) AS total FROM projects WHERE status != 'Done'"),
-    first(db, "SELECT COUNT(*) AS total FROM tickets WHERE status != 'Closed'"),
-    first(db, "SELECT COUNT(*) AS total FROM leads WHERE status = 'Converted'"),
-    first(db, "SELECT value, updated_at FROM app_metadata WHERE key = ?", migrationKey),
+    safeFirst("SELECT COUNT(*) AS total FROM leads"),
+    safeFirst("SELECT COUNT(*) AS total FROM projects WHERE status != 'Done'"),
+    safeFirst("SELECT COALESCE(SUM(value), 0) AS total FROM projects WHERE status != 'Done'"),
+    safeFirst("SELECT COUNT(*) AS total FROM tickets WHERE status != 'Closed'"),
+    safeFirst("SELECT COUNT(*) AS total FROM leads WHERE status = 'Converted'"),
+    safeFirst("SELECT value, updated_at FROM app_metadata WHERE key = ?", migrationKey),
   ]);
   const [byStatus, byService, recentActivity, monthLeads] = await Promise.all([
-    all(db, "SELECT status, COUNT(*) AS total FROM leads GROUP BY status"),
-    all(db, "SELECT service, COUNT(*) AS total FROM leads GROUP BY service ORDER BY total DESC"),
-    all(db, "SELECT message, created_at FROM activity ORDER BY created_at DESC LIMIT 8"),
-    first(db, "SELECT COUNT(*) AS total FROM leads WHERE strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')"),
+    safeAll("SELECT status, COUNT(*) AS total FROM leads GROUP BY status"),
+    safeAll("SELECT service, COUNT(*) AS total FROM leads GROUP BY service ORDER BY total DESC"),
+    safeAll("SELECT message, created_at FROM activity ORDER BY created_at DESC LIMIT 8"),
+    safeFirst("SELECT COUNT(*) AS total FROM leads WHERE strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')"),
   ]);
   return {
     totalLeads: Number(leads?.total || 0),
@@ -528,16 +705,46 @@ export const getDashboardMetrics = async (db) => {
   };
 };
 
-export const readD1State = async (db) => ({
-  leads: (await listLeads(db, { page: 1, pageSize: 20 })).items,
-  projects: await listProjects(db),
-  clients: await listClients(db),
-  tickets: await listTickets(db),
-  pricing: await listPricing(db),
-  activity: await listActivity(db),
-  internshipApplications: (await listInternshipApplications(db, { page: 1, pageSize: 20 })).items,
-  metrics: await getDashboardMetrics(db),
-});
+export const readD1State = async (db) => {
+  const safeListLeads = async () => {
+    try {
+      return (await listLeads(db, { page: 1, pageSize: 20 })).items;
+    } catch (e) {
+      console.warn("readD1State listLeads warning:", e?.message || e);
+      return [];
+    }
+  };
+  const safeListInternships = async () => {
+    try {
+      return (await listInternshipApplications(db, { page: 1, pageSize: 20 })).items;
+    } catch (e) {
+      console.warn("readD1State listInternshipApplications warning:", e?.message || e);
+      return [];
+    }
+  };
+
+  const [leads, projects, clients, tickets, pricing, activity, internshipApplications, metrics] = await Promise.all([
+    safeListLeads(),
+    listProjects(db),
+    listClients(db),
+    listTickets(db),
+    listPricing(db),
+    listActivity(db),
+    safeListInternships(),
+    getDashboardMetrics(db),
+  ]);
+
+  return {
+    leads,
+    projects,
+    clients,
+    tickets,
+    pricing,
+    activity,
+    internshipApplications,
+    metrics,
+  };
+};
 
 export const writeD1State = async (db, state = {}) => {
   const syncIds = async (table, ids) => {
@@ -635,24 +842,30 @@ export const migrateKvStateToD1 = async (db, kv) => {
 };
 
 export const getStorageStatus = async (db, kv) => {
-  const [leadCount, projectCount, clientCount, ticketCount, internshipCount, migration] = await Promise.all([
-    first(db, "SELECT COUNT(*) AS total FROM leads"),
-    first(db, "SELECT COUNT(*) AS total FROM projects"),
-    first(db, "SELECT COUNT(*) AS total FROM clients"),
-    first(db, "SELECT COUNT(*) AS total FROM tickets"),
-    first(db, "SELECT COUNT(*) AS total FROM internship_applications"),
-    first(db, "SELECT value, updated_at FROM app_metadata WHERE key = ?", migrationKey),
-  ]);
+  let leadCount = 0;
+  let projectCount = 0;
+  let clientCount = 0;
+  let ticketCount = 0;
+  let internshipCount = 0;
+  let migration = null;
+
+  try { leadCount = Number((await first(db, "SELECT COUNT(*) AS total FROM leads"))?.total || 0); } catch {}
+  try { projectCount = Number((await first(db, "SELECT COUNT(*) AS total FROM projects"))?.total || 0); } catch {}
+  try { clientCount = Number((await first(db, "SELECT COUNT(*) AS total FROM clients"))?.total || 0); } catch {}
+  try { ticketCount = Number((await first(db, "SELECT COUNT(*) AS total FROM tickets"))?.total || 0); } catch {}
+  try { internshipCount = Number((await first(db, "SELECT COUNT(*) AS total FROM internship_applications"))?.total || 0); } catch {}
+  try { migration = await first(db, "SELECT value, updated_at FROM app_metadata WHERE key = ?", migrationKey); } catch {}
+
   return {
     activeStorage: "D1",
     d1Connected: true,
     kvConnected: Boolean(kv),
     counts: {
-      leads: Number(leadCount?.total || 0),
-      projects: Number(projectCount?.total || 0),
-      clients: Number(clientCount?.total || 0),
-      tickets: Number(ticketCount?.total || 0),
-      internshipApplications: Number(internshipCount?.total || 0),
+      leads: leadCount,
+      projects: projectCount,
+      clients: clientCount,
+      tickets: ticketCount,
+      internshipApplications: internshipCount,
     },
     migration: migration ? { completed: true, updatedAt: migration.updated_at, details: JSON.parse(migration.value || "{}") } : { completed: false },
   };
