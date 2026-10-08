@@ -57,7 +57,14 @@
     });
 
     if (!response.ok) {
-      throw new Error(`Request failed: ${response.status}`);
+      let message = `Request failed: ${response.status}`;
+      try {
+        const errorData = await response.json();
+        if (errorData && errorData.error) {
+          message = errorData.error;
+        }
+      } catch {}
+      throw new Error(message);
     }
 
     return response.status === 204 ? null : response.json();

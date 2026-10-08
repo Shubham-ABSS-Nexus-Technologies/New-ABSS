@@ -16,7 +16,7 @@
 
   const redirectToLogin = () => {
     const nextPage = getSafeNextPage(getCurrentAdminPage());
-    window.location.replace(`${loginPath}?next=${encodeURIComponent(nextPage)}`);
+    window.location.replace(`/src/admin/admin-login.html?next=${encodeURIComponent(nextPage)}`);
   };
 
   window.AbssAdminAuthGuard = {
@@ -37,7 +37,9 @@
     async redirectAuthenticatedLogin(nextPage) {
       const result = await window.AbssAdminApi?.validateSession();
       if (result?.authenticated) {
-        window.location.replace(getSafeNextPage(nextPage));
+        const safe = getSafeNextPage(nextPage);
+        const targetPath = safe.startsWith("/") ? safe : `/src/admin/${safe}`;
+        window.location.replace(targetPath);
       }
     },
   };

@@ -522,11 +522,12 @@ if (adminLoginPage) {
 
     try {
       await window.AbssAdminApi?.login(username, password);
-      window.location.href = safeNextPage;
+      const targetPath = safeNextPage.startsWith("/") ? safeNextPage : `/src/admin/${safeNextPage}`;
+      window.location.href = targetPath;
       return;
     } catch (error) {
       if (message) {
-        message.textContent = "Wrong username or password.";
+        message.textContent = error?.message || "Wrong username or password.";
       }
     }
   });
